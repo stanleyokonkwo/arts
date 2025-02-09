@@ -1,0 +1,178 @@
+FIRST BACKUP CODES
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/index.css" />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page screenshorter</title>
+
+    <!-- Import map to resolve module specifiers -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'OrbitControls';
+    
+        console.log('🚀 Three.js script loaded');
+    
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 3;
+    
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio); // Ensure sharp rendering
+        document.body.appendChild(renderer.domElement);
+    
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 5;
+        controls.minDistance = 2;
+        console.log('🎮 OrbitControls initialized');
+    
+        const textureLoader = new THREE.TextureLoader();
+    
+        // Helper function to load texture asynchronously
+        const loadTexture = (filename) => {
+            return new Promise((resolve, reject) => {
+                const texturePath = `http://localhost:3000/screenshots/${filename}`;
+                console.log(`🖼 Loading texture: ${texturePath}`);
+    
+                textureLoader.load(texturePath,
+                    (tex) => {
+                        console.log(`✅ Successfully loaded: ${filename}`);
+                        tex.minFilter = THREE.LinearFilter;  // Better quality scaling
+                        tex.magFilter = THREE.LinearFilter;
+                        tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                        resolve(tex);
+                    },
+                    undefined,
+                    (err) => {
+                        console.error(`❌ Failed to load texture: ${filename}`, err);
+                        reject(err);
+                    }
+                );
+            });
+        };
+    
+        // Function to fetch and load images sequentially
+        const loadImages = async () => {
+            try {
+                const response = await fetch('http://localhost:3000/api/screenshots');
+                const data = await response.json();
+    
+                if (!data.screenshots || data.screenshots.length === 0) {
+                    console.warn('⚠ No screenshots found');
+                    return;
+                }
+    
+                data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    
+                let zPosition = 0;
+                for (const filename of data.screenshots) {
+                    try {
+                        const texture = await loadTexture(filename);
+                        const aspectRatio = texture.image.width / texture.image.height;
+                        const planeHeight = window.innerHeight / 300;
+                        const planeWidth = planeHeight * aspectRatio;
+    
+                        const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                        const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+                        const mesh = new THREE.Mesh(geometry, material);
+                        mesh.position.z = zPosition;
+                        scene.add(mesh);
+    
+                        console.log(`🛠 Layer added: ${filename} at Z=${zPosition}`);
+                        zPosition -= 0.5;
+                    } catch (error) {
+                        console.warn(`⚠ Skipping texture: ${filename}`);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error fetching images:', error);
+            }
+        };
+    
+        loadImages();
+    
+        const animate = () => {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        };
+    
+        console.log('🎬 Animation started');
+        animate();
+    
+        // Handle window resizing
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+    
+            scene.children.forEach((child) => {
+                if (child instanceof THREE.Mesh) {
+                    const texture = child.material.map;
+                    if (texture.image) {
+                        const aspectRatio = texture.image.width / texture.image.height;
+                        const planeHeight = window.innerHeight / 300;
+                        const planeWidth = planeHeight * aspectRatio;
+    
+                        child.geometry.dispose();
+                        child.geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+                    }
+                }
+            });
+    
+            console.log('🔄 Window resized');
+        });
+    
+        // Zoom In and Zoom Out Controls
+        document.getElementById('zoomIn').addEventListener('click', () => {
+            camera.position.z -= 0.1; 
+            controls.update();
+        });
+    
+        document.getElementById('zoomOut').addEventListener('click', () => {
+            camera.position.z += 0.1;
+            controls.update();
+        });
+    
+        // Pan Controls
+        document.getElementById('panUp').addEventListener('click', () => {
+            camera.position.y += 0.1; 
+            controls.update();
+        });
+    
+        document.getElementById('panDown').addEventListener('click', () => {
+            camera.position.y -= 0.1;
+            controls.update();
+        });
+    
+        document.getElementById('panLeft').addEventListener('click', () => {
+            camera.position.x -= 0.1;
+            controls.update();
+        });
+    
+        document.getElementById('panRight').addEventListener('click', () => {
+            camera.position.x += 0.1;
+            controls.update();
+        });
+    </script>
+    
+</body>
+</html>

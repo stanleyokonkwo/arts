@@ -1,0 +1,24 @@
+#controls {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+}
+
+.button {
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    padding: 10px;
+    margin: 5px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.button:focus {
+    outline: none;
+}
+
+.button i {
+    font-size: 18px;
+}
