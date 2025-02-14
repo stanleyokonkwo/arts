@@ -1,0 +1,1348 @@
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import express from 'express';
+
+puppeteer.use(StealthPlugin());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = 3000;
+const outputDir = path.join(__dirname, 'screenshots');
+
+await fs.ensureDir(outputDir);
+console.log('🗂 Screenshot directory ensured:', outputDir);
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/screenshots', express.static(outputDir, {
+    setHeaders: (res, filePath) => {
+        console.log(`📸 Serving screenshot: ${filePath}`);
+    }
+}));
+
+app.get('/api/screenshots', async (req, res) => {
+    try {
+        const files = await fs.readdir(outputDir);
+        const imageFiles = files.filter(file => file.endsWith('.png'));
+        res.json({ screenshots: imageFiles });
+    } catch (error) {
+        console.error('❌ Error fetching screenshots:', error);
+        res.status(500).json({ error: 'Failed to retrieve screenshots' });
+    }
+});
+
+
+const captureMockup = async () => {
+    const url = 'https://www.linkedin.com';
+    console.log(`🌐 Navigating to: ${url}`);
+
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
+    const page = await browser.newPage();
+    
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    await page.setViewport({ width: 1440, height: 900 });
+
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    // Wait for cookie popup and try to click "Accept"
+    try {
+        await page.waitForSelector('button', { timeout: 5000 });
+        const accepted = await page.evaluate(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const acceptButton = buttons.find(btn => 
+                /accept|consent/i.test(btn.innerText)
+            );
+            if (acceptButton) {
+                acceptButton.click();
+                console.log(`✅ Clicked cookie button: ${acceptButton.innerText}`);
+                return true;
+            }
+            return false;
+        });
+
+        if (!accepted) console.log("⚠️ No consent button found.");
+    } catch (error) {
+        console.log("⚠️ No cookie popups detected.");
+    }
+
+    // Wait for cookies to be processed
+    await new Promise(resolve => setTimeout(resolve, 4000));
+
+    const totalHeight = await page.evaluate(() => document.body.scrollHeight);
+    const viewportHeight = await page.viewport().height;
+    let currentPosition = 0;
+    let index = 0;
+
+    while (currentPosition < totalHeight) {
+        const screenshotPath = path.join(outputDir, `section_${index}.png`);
+        await page.screenshot({ path: screenshotPath, fullPage: false });
+
+        console.log(`✅ Screenshot captured: ${screenshotPath}`);
+
+        currentPosition += viewportHeight;
+        await page.evaluate((scrollAmount) => window.scrollBy(0, scrollAmount), viewportHeight);
+
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        index++;
+    }
+
+    await browser.close();
+    console.log('📸 Screenshot capture completed.');
+};
+
+app.listen(PORT, async () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+    await captureMockup();
+});
+
+
+
+
+
+
+
+
+
+2
+
+
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import fs from 'fs-extra';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import express from 'express';
+import cors from 'cors';
+
+puppeteer.use(StealthPlugin());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+const PORT = 3000;
+const outputDir = path.join(__dirname, 'screenshots');
+
+await fs.ensureDir(outputDir);
+console.log('🗂 Screenshot directory ensured:', outputDir);
+
+// Middleware
+app.use(cors()); // Allow requests from the frontend
+app.use(express.json()); // Parse JSON request body
+app.use(express.urlencoded({ extended: true })); // Parse form data
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/screenshots', express.static(outputDir));
+
+
+// Endpoint to fetch available screenshots
+app.get('/api/screenshots', async (req, res) => {
+    try {
+        const files = await fs.readdir(outputDir);
+        const imageFiles = files.filter(file => file.endsWith('.png'));
+        res.json({ screenshots: imageFiles });
+    } catch (error) {
+        console.error('❌ Error fetching screenshots:', error);
+        res.status(500).json({ error: 'Failed to retrieve screenshots' });
+    }
+});
+
+// Endpoint to capture screenshot from a URL
+app.post('/api/capture', async (req, res) => {
+    const { url } = req.body;
+    if (!url) {
+        return res.status(400).json({ error: 'URL is required' });
+    }
+
+    console.log(`🗑️ Clearing old screenshots...`);
+    try {
+        const files = await fs.readdir(outputDir);
+        for (const file of files) {
+            if (file.endsWith('.png')) {
+                await fs.unlink(path.join(outputDir, file));
+            }
+        }
+        console.log(`✅ Cleared old screenshots.`);
+    } catch (error) {
+        console.error('❌ Error clearing old screenshots:', error);
+    }
+
+    console.log(`🌐 Capturing new screenshots for: ${url}`);
+
+    try {
+        await captureMockup(url);
+        res.json({ success: true, message: `Screenshots captured for ${url}` });
+    } catch (error) {
+        console.error('❌ Screenshot capture failed:', error);
+        res.status(500).json({ error: 'Failed to capture screenshot' });
+    }
+});
+
+
+const captureMockup = async (url) => {
+    console.log(`🌐 Navigating to: ${url}`);
+
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
+    const page = await browser.newPage();
+    
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+    await page.setViewport({ width: 1440, height: 900 });
+
+    await page.goto(url, { waitUntil: 'networkidle2' });
+
+    try {
+        await page.waitForSelector('button', { timeout: 5000 });
+        const accepted = await page.evaluate(() => {
+            const buttons = Array.from(document.querySelectorAll('button'));
+            const acceptButton = buttons.find(btn => 
+                /accept|consent/i.test(btn.innerText)
+            );
+            if (acceptButton) {
+                acceptButton.click();
+                console.log(`✅ Clicked cookie button: ${acceptButton.innerText}`);
+                return true;
+            }
+            return false;
+        });
+
+        if (!accepted) console.log("⚠️ No consent button found.");
+    } catch (error) {
+        console.log("⚠️ No cookie popups detected.");
+    }
+
+    // Wait for cookies to be processed
+    await new Promise(resolve => setTimeout(resolve, 4000));
+    const totalHeight = await page.evaluate(() => document.body.scrollHeight);
+    const viewportHeight = await page.viewport().height;
+    let currentPosition = 0;
+    let index = 0;
+
+    while (currentPosition < totalHeight) {
+        const screenshotPath = path.join(outputDir, `section_${index}.png`);
+        
+        
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds
+        // Wait 5 seconds for animations/loaders
+        await page.screenshot({ path: screenshotPath, fullPage: false });
+        
+        console.log(`✅ Screenshot captured: ${screenshotPath}`);
+
+        currentPosition += viewportHeight;
+        await page.evaluate((scrollAmount) => window.scrollBy(0, scrollAmount), viewportHeight);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        index++;
+    }
+
+    await browser.close();
+    console.log('📸 Screenshot capture completed.');
+};
+
+app.listen(PORT, () => {
+    console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
+
+
+
+
+3
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css" />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page screenshorter</title>
+
+    <!-- Import map to resolve module specifiers -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <div>
+    <button id="shuffleBtn">Shuffle</button>
+    <button id="prevPage">Previous Page</button>
+    <button id="nextPage">Next Page</button>
+</div>
+
+<form id="screenshotForm">
+    <label for="url">Enter Website URL:</label>
+    <input type="url" id="url" name="url" required>
+    <button type="submit">Capture Webpages</button>
+</form>
+<div>
+    <label for="radiusSlider">Adjust Radius:</label>
+    <input type="range" id="radiusSlider" min="2" max="10" step="0.1" value="4">
+    <span id="radiusValue">4.0</span>
+</div>
+
+<div>
+    <label for="zoomSlider">Adjust Zoom:</label>
+    <input type="range" id="zoomSlider" min="2" max="10" step="0.1" value="3">
+    <span id="zoomValue">3.0</span>
+</div>
+
+    <script type="module">
+const fetchScreenshots = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/api/screenshots');
+        const data = await response.json();
+        console.log('Updated Screenshots:', data.screenshots);
+    } catch (error) {
+        console.error('Error fetching screenshots:', error);
+    }
+};
+
+// Poll every 5 seconds
+setInterval(fetchScreenshots, 5000);
+
+const zoomSlider = document.getElementById('zoomSlider');
+const zoomValue = document.getElementById('zoomValue');
+
+zoomSlider.addEventListener('input', () => {
+    const zoomLevel = parseFloat(zoomSlider.value);
+    zoomValue.textContent = zoomLevel.toFixed(1);
+    
+    camera.position.z = zoomLevel; // Update camera zoom dynamically
+    camera.updateProjectionMatrix(); // Apply changes
+
+    console.log(`🔍 Zoom level updated: ${zoomLevel}`);
+});
+
+
+
+const radiusSlider = document.getElementById('radiusSlider');
+const radiusValue = document.getElementById('radiusValue');
+
+let radius = parseFloat(radiusSlider.value); // Initial radius
+
+radiusSlider.addEventListener('input', () => {
+    radius = parseFloat(radiusSlider.value);
+    radiusValue.textContent = radius.toFixed(1);
+    updateImagePositions(); // Update image positions dynamically
+});
+
+// Function to reposition images based on the new radius
+const updateImagePositions = () => {
+    const images = scene.children.filter(obj => obj instanceof THREE.Mesh);
+    const angleIncrement = (2 * Math.PI) / images.length;
+
+    images.forEach((mesh, index) => {
+        const angle = index * angleIncrement;
+        mesh.position.x = radius * Math.cos(angle);
+        mesh.position.z = radius * Math.sin(angle);
+        mesh.lookAt(0, 0, 0); // Ensure images face the center
+    });
+
+    console.log(`🔄 Updated radius: ${radius}`);
+};
+
+
+        document.getElementById('screenshotForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            if (!url) {
+                alert('Please enter a valid URL.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                alert(result.message);
+                loadImages(); // Refresh the screenshot list
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to capture screenshot.');
+            }
+        });
+
+     import * as THREE from 'three';
+import { OrbitControls } from 'OrbitControls';
+
+console.log('🚀 Three.js script loaded');
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 3;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(window.devicePixelRatio); // Ensure sharp rendering
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxDistance = 5;
+controls.minDistance = 2;
+console.log('🎮 OrbitControls initialized');
+
+const textureLoader = new THREE.TextureLoader();
+
+// Helper function to load texture asynchronously
+const loadTexture = (filename) => {
+    return new Promise((resolve, reject) => {
+        const texturePath = `http://localhost:3000/screenshots/${filename}`;
+        console.log(`🖼 Loading texture: ${texturePath}`);
+
+        textureLoader.load(texturePath,
+            (tex) => {
+                console.log(`✅ Successfully loaded: ${filename}`);
+                tex.minFilter = THREE.LinearFilter;  // Better quality scaling
+                tex.magFilter = THREE.LinearFilter;
+                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                resolve(tex);
+            },
+            undefined,
+            (err) => {
+                console.error(`❌ Failed to load texture: ${filename}`, err);
+                reject(err);
+            }
+        );
+    });
+};
+(function() {
+  let images = [];  // Array to keep track of all loaded images
+  let removedImages = [];  // Array to track removed images
+
+  // Function to load images into the scene
+  const loadImages = async () => {
+      try {
+          const response = await fetch('http://localhost:3000/api/screenshots');
+          const data = await response.json();
+
+          if (!data.screenshots || data.screenshots.length === 0) {
+              console.warn('⚠ No screenshots found');
+              return;
+          }
+
+          data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+          const radius = 3.5; // Radius of the circular arrangement
+          const angleIncrement = (2 * Math.PI) / data.screenshots.length; // Equal spacing for images
+
+          let index = 0;
+          for (const filename of data.screenshots) {
+              try {
+                  const texture = await loadTexture(filename);
+                  const aspectRatio = texture.image.width / texture.image.height;
+                  const planeHeight = window.innerHeight / 300;
+                  const planeWidth = planeHeight * aspectRatio;
+
+                  const angle = index * angleIncrement;
+                  const x = radius * Math.cos(angle);
+                  const z = radius * Math.sin(angle);
+
+                  const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                  const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+                  const mesh = new THREE.Mesh(geometry, material);
+                  mesh.position.set(x, 0, z); // Place image in the circular arrangement
+                  mesh.lookAt(0, 0, 0); // Make sure images face the center of the circle
+
+                  // Create "Remove" button
+                  const removeBtn = document.createElement('button');
+                  removeBtn.textContent = 'Remove';
+                  removeBtn.addEventListener('click', () => {
+                      scene.remove(mesh);  // Remove image from the scene
+                      removeBtn.style.display = 'none';  // Hide the "Remove" button
+
+                      // Store the removed image data
+                      removedImages.push({ mesh, filename });
+                      console.log(`🗑️ Removed image: ${filename}`);
+
+                      // Remove from the images array
+                      images = images.filter(img => img.filename !== filename);
+
+                      // Update positions of the remaining images
+                      updateImagePositions();
+                  });
+
+                  // Append remove button to the body or somewhere near the image
+                  document.body.appendChild(removeBtn);
+
+                  scene.add(mesh);
+                  images.push({ mesh, filename });  // Add image to the array
+                  console.log(`🛠 Layer added: ${filename} at position (${x}, 0, ${z})`);
+                  index++;
+              } catch (error) {
+                  console.warn(`⚠ Skipping texture: ${filename}`);
+              }
+          }
+      } catch (error) {
+          console.error('❌ Error fetching images:', error);
+      }
+  };
+
+  // Function to update image positions based on the current array of images
+  const updateImagePositions = () => {
+      const remainingImages = scene.children.filter(obj => obj instanceof THREE.Mesh);
+      const angleIncrement = (2 * Math.PI) / remainingImages.length;
+
+      remainingImages.forEach((mesh, index) => {
+          const angle = index * angleIncrement;
+          mesh.position.x = 3.5 * Math.cos(angle); // Use fixed radius (can be dynamic as well)
+          mesh.position.z = 3.5 * Math.sin(angle);
+          mesh.lookAt(0, 0, 0); // Ensure images face the center
+      });
+
+      console.log(`🔄 Updated positions of images after removal`);
+  };
+
+  // Call this method to re-render the images after removing one
+  loadImages();
+})();
+
+
+const animate = () => {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+};
+
+console.log('🎬 Animation started');
+animate();
+
+// Handle window resizing
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    console.log('🔄 Window resized');
+});
+
+// Rotation controls (optional)
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+    scene.rotation.y += Math.PI / 8; // Rotate the scene for a shuffle effect
+});
+
+document.getElementById('prevPage').addEventListener('click', () => {
+    scene.rotation.y -= Math.PI / 8; // Rotate the scene left
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+    scene.rotation.y += Math.PI / 8; // Rotate the scene right
+});
+
+    </script>
+    
+    
+</body>
+</html>
+
+
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css" />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page screenshorter</title>
+
+    <!-- Import map to resolve module specifiers -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
+        }
+    }
+    </script>
+</head>
+<body>
+<div style=" background-color: rgb(255, 255, 255);">
+    <div>
+    <button id="shuffleBtn">Shuffle</button>
+    <button id="prevPage">Previous Page</button>
+    <button id="nextPage">Next Page</button>
+</div>
+
+<form id="screenshotForm">
+    <label for="url">Enter Website URL:</label>
+    <input type="url" id="url" name="url" required>
+    <button type="submit">Capture Webpages</button>
+</form>
+<button id="toggleRotateBtn">Toggle Rotation</button>
+
+<div>
+    <label for="radiusSlider">Adjust Radius:</label>
+    <input type="range" id="radiusSlider" min="2" max="10" step="0.1" value="4">
+    <span id="radiusValue">4.0</span>
+</div>
+
+<div>
+    <label for="zoomSlider">Adjust Zoom:</label>
+    <input type="range" id="zoomSlider" min="2" max="10" step="0.1" value="3">
+    <span id="zoomValue">3.0</span>
+</div>
+<button id="downloadBtn">Download Rendered Image</button>
+</div>
+
+    <script type="module">
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    // Temporarily set the renderer to 1920x1080 for higher quality capture
+    const originalSize = { width: renderer.domElement.width, height: renderer.domElement.height };
+    
+    renderer.setSize(1920, 1080, false);
+    renderer.setPixelRatio(window.devicePixelRatio); // Ensure sharp rendering
+    renderer.render(scene, camera); // Ensure latest render
+    
+    const imgData = renderer.domElement.toDataURL('image/png'); // Convert to PNG format
+
+    const link = document.createElement('a');
+    link.href = imgData;
+    link.download = 'rendered_image.png';
+    link.click(); // Trigger download
+
+    console.log('📸 Screenshot captured in Full HD and ready for download');
+
+    // Restore original renderer size
+    renderer.setSize(originalSize.width, originalSize.height, false);
+});
+
+
+
+
+
+
+const zoomSlider = document.getElementById('zoomSlider');
+const zoomValue = document.getElementById('zoomValue');
+
+zoomSlider.addEventListener('input', () => {
+    const zoomLevel = parseFloat(zoomSlider.value);
+    zoomValue.textContent = zoomLevel.toFixed(1);
+    
+    camera.position.z = zoomLevel; // Update camera zoom dynamically
+    camera.updateProjectionMatrix(); // Apply changes
+
+    console.log(`🔍 Zoom level updated: ${zoomLevel}`);
+});
+
+
+
+const radiusSlider = document.getElementById('radiusSlider');
+const radiusValue = document.getElementById('radiusValue');
+
+let radius = parseFloat(radiusSlider.value); // Initial radius
+
+radiusSlider.addEventListener('input', () => {
+    radius = parseFloat(radiusSlider.value);
+    radiusValue.textContent = radius.toFixed(1);
+    updateImagePositions(); // Update image positions dynamically
+});
+
+// Function to reposition images based on the new radius
+const updateImagePositions = () => {
+    const images = scene.children.filter(obj => obj instanceof THREE.Mesh);
+    const angleIncrement = (2 * Math.PI) / images.length;
+
+    images.forEach((mesh, index) => {
+        const angle = index * angleIncrement;
+        mesh.position.x = radius * Math.cos(angle);
+        mesh.position.z = radius * Math.sin(angle);
+        mesh.lookAt(0, 0, 0); // Ensure images face the center
+    });
+
+    console.log(`🔄 Updated radius: ${radius}`);
+};
+
+
+        document.getElementById('screenshotForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            if (!url) {
+                alert('Please enter a valid URL.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                alert(result.message);
+                loadImages(); // Refresh the screenshot list
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to capture screenshot.');
+            }
+        });
+
+     import * as THREE from 'three';
+import { OrbitControls } from 'OrbitControls';
+
+console.log('🚀 Three.js script loaded');
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 3;
+
+
+const renderer = new THREE.WebGLRenderer({ 
+    alpha: true,  // Keep transparency
+    antialias: true,
+    preserveDrawingBuffer: true // Ensures transparency when downloading
+});
+
+// Do not set a background color in WebGL (keeps transparency)
+renderer.setClearColor(0x000000, 0);
+
+// Ensure sharp rendering
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Apply black background using CSS
+document.body.style.backgroundColor = "black";
+
+renderer.setPixelRatio(window.devicePixelRatio); // High-quality rendering
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix(); // Prevent stretching
+});
+
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxDistance = 5;
+controls.minDistance = 2;
+console.log('🎮 OrbitControls initialized');
+
+const textureLoader = new THREE.TextureLoader();
+
+// Helper function to load texture asynchronously
+const loadTexture = (filename) => {
+    return new Promise((resolve, reject) => {
+        const texturePath = `http://localhost:3000/screenshots/${filename}`;
+        console.log(`🖼 Loading texture: ${texturePath}`);
+
+        textureLoader.load(texturePath,
+            (tex) => {
+                console.log(`✅ Successfully loaded: ${filename}`);
+                tex.minFilter = THREE.LinearFilter;  // Better quality scaling
+                tex.magFilter = THREE.LinearFilter;
+                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                resolve(tex);
+            },
+            undefined,
+            (err) => {
+                console.error(`❌ Failed to load texture: ${filename}`, err);
+                reject(err);
+            }
+        );
+    });
+};
+
+
+(function() {
+  let images = [];  
+  let removedImages = [];  
+
+  const loadImages = async () => {
+      try {
+          const response = await fetch('http://localhost:3000/api/screenshots');
+          const data = await response.json();
+
+          if (!data.screenshots || data.screenshots.length === 0) {
+              console.warn('⚠ No screenshots found');
+              return;
+          }
+
+          data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+          const radius = 3.5; 
+          const angleIncrement = (2 * Math.PI) / data.screenshots.length; 
+
+          let index = 0;
+          for (const filename of data.screenshots) {
+              try {
+                  const texture = await loadTexture(filename);
+                  const aspectRatio = texture.image.width / texture.image.height;
+                  const planeHeight = window.innerHeight / 300;
+                  const planeWidth = planeHeight * aspectRatio;
+
+                  const angle = index * angleIncrement;
+                  const x = radius * Math.cos(angle);
+                  const z = radius * Math.sin(angle);
+
+                  const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                  const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+                  const mesh = new THREE.Mesh(geometry, material);
+                  mesh.position.set(x, 0, z); 
+                  mesh.lookAt(0, 0, 0); 
+
+                  const removeBtn = document.createElement('button');
+                  removeBtn.textContent = 'Remove';
+                  removeBtn.addEventListener('click', () => {
+                      scene.remove(mesh);  
+                      removeBtn.style.display = 'none'; 
+
+                      removedImages.push({ mesh, filename });
+                      console.log(`🗑️ Removed image: ${filename}`);
+
+                      
+                      images = images.filter(img => img.filename !== filename);
+
+                      // Update positions of the remaining images
+                      updateImagePositions();
+                  });
+
+                  // Append remove button to the body or somewhere near the image
+                  document.body.appendChild(removeBtn);
+
+                  scene.add(mesh);
+                  images.push({ mesh, filename });  // Add image to the array
+                  console.log(`🛠 Layer added: ${filename} at position (${x}, 0, ${z})`);
+                  index++;
+              } catch (error) {
+                  console.warn(`⚠ Skipping texture: ${filename}`);
+              }
+          }
+      } catch (error) {
+          console.error('❌ Error fetching images:', error);
+      }
+  };
+
+  const updateImagePositions = () => {
+      const remainingImages = scene.children.filter(obj => obj instanceof THREE.Mesh);
+      const angleIncrement = (2 * Math.PI) / remainingImages.length;
+
+      remainingImages.forEach((mesh, index) => {
+          const angle = index * angleIncrement;
+          mesh.position.x = 3.5 * Math.cos(angle); 
+          mesh.position.z = 3.5 * Math.sin(angle);
+          mesh.lookAt(0, 0, 0); 
+      });
+
+      console.log(`🔄 Updated positions of images after removal`);
+  };
+
+  loadImages();
+})();
+
+
+let autoRotate = false; // Initially set to manual rotation
+
+// Function to toggle auto-rotation
+document.getElementById('toggleRotateBtn').addEventListener('click', () => {
+    autoRotate = !autoRotate;
+    console.log(autoRotate ? '🔄 Auto-rotate enabled' : '🛑 Auto-rotate disabled');
+});
+
+// Update the animate function
+const animate = () => {
+    requestAnimationFrame(animate);
+
+    if (autoRotate) {
+        scene.rotation.y += 0.002; // Rotate when auto mode is on
+    }
+
+    controls.update();
+    renderer.render(scene, camera);
+};
+
+console.log('🎬 Animation started');
+animate();
+
+
+
+console.log('🎬 Animation started');
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    console.log('🔄 Window resized');
+});
+
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+    scene.rotation.y += Math.PI / 8;
+});
+
+document.getElementById('prevPage').addEventListener('click', () => {
+    scene.rotation.y -= Math.PI / 8; 
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+    scene.rotation.y += Math.PI / 8; 
+});
+
+    </script>
+    
+    
+</body>
+</html>
+
+
+
+
+
+
+
+
+HTML 3D WITH 4D
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="index.css" />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page screenshorter</title>
+
+    <!-- Import map to resolve module specifiers -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
+        }
+    }
+    </script>
+</head>
+<body>
+<div style=" background-color: rgb(255, 255, 255);">
+    <div>
+    <button id="shuffleBtn">Shuffle</button>
+    <button id="prevPage">Previous Page</button>
+    <button id="nextPage">Next Page</button>
+</div>
+
+<form id="screenshotForm">
+    <label for="url">Enter Website URL:</label>
+    <input type="url" id="url" name="url" required>
+    <button type="submit">Capture Webpages</button>
+</form>
+<button id="toggleRotateBtn">Toggle Rotation</button>
+
+<div>
+    <label for="radiusSlider">Adjust Radius:</label>
+    <input type="range" id="radiusSlider" min="2" max="10" step="0.1" value="4">
+    <span id="radiusValue">4.0</span>
+</div>
+
+<div>
+    <label for="zoomSlider">Adjust Zoom:</label>
+    <input type="range" id="zoomSlider" min="2" max="10" step="0.1" value="3">
+    <span id="zoomValue">3.0</span>
+</div>
+<button id="downloadBtn">Download Rendered Image</button>
+</div>
+
+    <script type="module">
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+    // Temporarily set the renderer to 1920x1080 for higher quality capture
+    const originalSize = { width: renderer.domElement.width, height: renderer.domElement.height };
+    
+    renderer.setSize(1920, 1080, false);
+    renderer.setPixelRatio(window.devicePixelRatio); // Ensure sharp rendering
+    renderer.render(scene, camera); // Ensure latest render
+    
+    const imgData = renderer.domElement.toDataURL('image/png'); // Convert to PNG format
+
+    const link = document.createElement('a');
+    link.href = imgData;
+    link.download = 'rendered_image.png';
+    link.click(); // Trigger download
+
+    console.log('📸 Screenshot captured in Full HD and ready for download');
+
+    // Restore original renderer size
+    renderer.setSize(originalSize.width, originalSize.height, false);
+});
+
+
+
+
+
+
+const zoomSlider = document.getElementById('zoomSlider');
+const zoomValue = document.getElementById('zoomValue');
+
+zoomSlider.addEventListener('input', () => {
+    const zoomLevel = parseFloat(zoomSlider.value);
+    zoomValue.textContent = zoomLevel.toFixed(1);
+    
+    camera.position.z = zoomLevel; // Update camera zoom dynamically
+    camera.updateProjectionMatrix(); // Apply changes
+
+    console.log(`🔍 Zoom level updated: ${zoomLevel}`);
+});
+
+
+
+const radiusSlider = document.getElementById('radiusSlider');
+const radiusValue = document.getElementById('radiusValue');
+
+let radius = parseFloat(radiusSlider.value); // Initial radius
+
+radiusSlider.addEventListener('input', () => {
+    radius = parseFloat(radiusSlider.value);
+    radiusValue.textContent = radius.toFixed(1);
+    updateImagePositions(); // Update image positions dynamically
+});
+
+// Function to reposition images based on the new radius
+const updateImagePositions = () => {
+    const images = scene.children.filter(obj => obj instanceof THREE.Mesh);
+    const angleIncrement = (2 * Math.PI) / images.length;
+
+    images.forEach((mesh, index) => {
+        const angle = index * angleIncrement;
+        mesh.position.x = radius * Math.cos(angle);
+        mesh.position.z = radius * Math.sin(angle);
+        mesh.lookAt(0, 0, 0); // Ensure images face the center
+    });
+
+    console.log(`🔄 Updated radius: ${radius}`);
+};
+
+
+        document.getElementById('screenshotForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            if (!url) {
+                alert('Please enter a valid URL.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const result = await response.json();
+                alert(result.message);
+                loadImages(); // Refresh the screenshot list
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to capture screenshot.');
+            }
+        });
+
+     import * as THREE from 'three';
+import { OrbitControls } from 'OrbitControls';
+
+console.log('🚀 Three.js script loaded');
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.z = 3;
+
+
+const renderer = new THREE.WebGLRenderer({ 
+    alpha: true,  // Keep transparency
+    antialias: true,
+    preserveDrawingBuffer: true // Ensures transparency when downloading
+});
+
+// Do not set a background color in WebGL (keeps transparency)
+renderer.setClearColor(0x000000, 0);
+
+// Ensure sharp rendering
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Apply black background using CSS
+document.body.style.backgroundColor = "black";
+
+renderer.setPixelRatio(window.devicePixelRatio); // High-quality rendering
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix(); // Prevent stretching
+});
+
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.maxDistance = 5;
+controls.minDistance = 2;
+console.log('🎮 OrbitControls initialized');
+
+const textureLoader = new THREE.TextureLoader();
+
+// Helper function to load texture asynchronously
+const loadTexture = (filename) => {
+    return new Promise((resolve, reject) => {
+        const texturePath = `http://localhost:3000/screenshots/${filename}`;
+        console.log(`🖼 Loading texture: ${texturePath}`);
+
+        textureLoader.load(texturePath,
+            (tex) => {
+                console.log(`✅ Successfully loaded: ${filename}`);
+                tex.minFilter = THREE.LinearFilter;  // Better quality scaling
+                tex.magFilter = THREE.LinearFilter;
+                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                resolve(tex);
+            },
+            undefined,
+            (err) => {
+                console.error(`❌ Failed to load texture: ${filename}`, err);
+                reject(err);
+            }
+        );
+    });
+};
+
+const placeScreenshotsInCircle = async (screenshots) => {
+    if (screenshots.length === 0) {
+        console.warn("⚠ No screenshots to display.");
+        return;
+    }
+
+    const radius = 3.5; // Distance from center
+    const angleIncrement = (2 * Math.PI) / screenshots.length; 
+
+    let index = 0;
+    for (const filename of screenshots) {
+        try {
+            const texture = await loadTexture(filename);
+            const aspectRatio = texture.image.width / texture.image.height;
+            const planeHeight = window.innerHeight / 300;
+            const planeWidth = planeHeight * aspectRatio;
+
+            const angle = index * angleIncrement;
+            const x = radius * Math.cos(angle);
+            const z = radius * Math.sin(angle);
+
+            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+            const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, 0, z); 
+            mesh.lookAt(0, 0, 0); 
+
+            scene.add(mesh);
+            index++;
+        } catch (error) {
+            console.warn(`⚠ Skipping texture: ${filename}`);
+        }
+    }
+};
+
+
+(function() {
+  let images = [];  
+  let removedImages = [];  
+
+  const loadImages = async () => {
+    try {
+        const response = await fetch('http://localhost:3000/api/screenshots');
+        const data = await response.json();
+
+        if (!data.screenshots || data.screenshots.length === 0) {
+            console.warn('⚠ No screenshots found');
+            return;
+        }
+
+        data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        // 🛠 Place screenshots in a circle (original method)
+        placeScreenshotsInCircle(data.screenshots);
+
+        // 🚀 Apply screenshots to tesseract
+        createTexturedTesseract(data.screenshots);
+
+    } catch (error) {
+        console.error('❌ Error fetching images:', error);
+    }
+};
+
+
+  const updateImagePositions = () => {
+      const remainingImages = scene.children.filter(obj => obj instanceof THREE.Mesh);
+      const angleIncrement = (2 * Math.PI) / remainingImages.length;
+
+      remainingImages.forEach((mesh, index) => {
+          const angle = index * angleIncrement;
+          mesh.position.x = 3.5 * Math.cos(angle); 
+          mesh.position.z = 3.5 * Math.sin(angle);
+          mesh.lookAt(0, 0, 0); 
+      });
+
+      console.log(`🔄 Updated positions of images after removal`);
+  };
+
+  loadImages();
+})();
+
+
+let points4D = [
+    [-1, -1, -1, -1], [1, -1, -1, -1], [1, 1, -1, -1], [-1, 1, -1, -1], 
+    [-1, -1,  1, -1], [1, -1,  1, -1], [1, 1,  1, -1], [-1, 1,  1, -1], 
+    [-1, -1, -1,  1], [1, -1, -1,  1], [1, 1, -1,  1], [-1, 1, -1,  1], 
+    [-1, -1,  1,  1], [1, -1,  1,  1], [1, 1,  1,  1], [-1, 1,  1,  1]  
+];
+
+const rotate4D = (point, angle) => {
+    let [x, y, z, w] = point;
+    let cosA = Math.cos(angle);
+    let sinA = Math.sin(angle);
+
+    let newX = cosA * x - sinA * w;
+    let newW = sinA * x + cosA * w;
+
+    return [newX, y, z, newW];
+};
+
+const project4Dto3D = (point) => {
+    let [x, y, z, w] = point;
+    let d = 2;  
+
+    let scale = d / (d - w);
+    return [x * scale, y * scale, z * scale];
+};
+
+const geometry = new THREE.BufferGeometry();
+const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+const tesseract = new THREE.LineSegments(geometry, material);
+scene.add(tesseract);
+
+let autoRotate = false; // Initially set to manual rotation
+
+// Function to toggle auto-rotation
+document.getElementById('toggleRotateBtn').addEventListener('click', () => {
+    autoRotate = !autoRotate;
+    console.log(autoRotate ? '🔄 Auto-rotate enabled' : '🛑 Auto-rotate disabled');
+});
+
+
+const createTexturedTesseract = async (screenshots) => {
+    if (screenshots.length < 6) {
+        console.warn("⚠ Not enough screenshots to texture a 3D cube");
+        return;
+    }
+
+    const materials = await Promise.all(
+        screenshots.slice(0, 6).map(async (filename) => {
+            try {
+                const texture = await loadTexture(filename);
+                return new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+            } catch (error) {
+                console.warn(`⚠ Skipping texture: ${filename}`);
+                return new THREE.MeshBasicMaterial({ color: 0x222222 }); // Default gray
+            }
+        })
+    );
+
+    const cubeGeometry = new THREE.BoxGeometry(1, 1, 1); // 3D Cube from 4D projection
+    const cubeMesh = new THREE.Mesh(cubeGeometry, materials);
+
+    scene.add(cubeMesh);
+};
+
+// Update the animate function
+let isRotating = true; // Rotation flag (initially enabled)
+
+const animate = () => {
+    requestAnimationFrame(animate);
+
+    // Toggle rotation based on the flag
+    scene.children.forEach(obj => {
+        if (obj instanceof THREE.Mesh && obj.geometry instanceof THREE.BoxGeometry) {
+            if (isRotating) {
+                obj.rotation.y += 0.01; // Rotate the cube with screenshots
+                obj.rotation.x += 0.01;
+            }
+        }
+    });
+
+    controls.update();
+    renderer.render(scene, camera);
+};
+
+// Set up the button to toggle rotation
+document.getElementById('toggleRotateBtn').addEventListener('click', () => {
+    isRotating = !isRotating; // Toggle the rotation state
+    console.log(isRotating ? "Rotation enabled" : "Rotation disabled");
+});
+
+animate();
+
+
+console.log('🎬 Animation started');
+animate();
+
+
+
+console.log('🎬 Animation started');
+animate();
+
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    console.log('🔄 Window resized');
+});
+
+document.getElementById('shuffleBtn').addEventListener('click', () => {
+    scene.rotation.y += Math.PI / 8;
+});
+
+document.getElementById('prevPage').addEventListener('click', () => {
+    scene.rotation.y -= Math.PI / 8; 
+});
+
+document.getElementById('nextPage').addEventListener('click', () => {
+    scene.rotation.y += Math.PI / 8; 
+});
+
+    </script>
+    
+    
+</body>
+</html>
