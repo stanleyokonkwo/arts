@@ -1,24 +1,253 @@
-#controls {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 100;
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-.button {
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #0f0f1a; /* Darker, richer background for depth */
+    color: #ffffff;
+    line-height: 1.6;
+    overflow: hidden;
+}
+
+/* Controls container - Enhanced glassmorphism with gradient border */
+.glass-effect {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 100vh;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(40, 40, 60, 0.9), rgba(20, 20, 40, 0.9)); /* Gradient glass effect */
+    backdrop-filter: blur(15px); /* Stronger blur for luxury feel */
+    border-right: 2px solid transparent;
+    border-image: linear-gradient(to bottom, #00d4ff, transparent) 1;
+    z-index: 10;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6); /* Deeper shadow */
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease, visibility 0s 0.4s;
+    overflow-y: auto; /* Scrollable */
+    scrollbar-width: thin;
+    scrollbar-color: #00d4ff rgba(40, 40, 60, 0.9);
+}
+
+/* Scrollbar styling for WebKit browsers */
+.glass-effect::-webkit-scrollbar {
+    width: 8px;
+}
+.glass-effect::-webkit-scrollbar-track {
+    background: rgba(40, 40, 60, 0.9);
+    border-radius: 10px;
+}
+.glass-effect::-webkit-scrollbar-thumb {
+    background: #00d4ff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+}
+.glass-effect::-webkit-scrollbar-thumb:hover {
+    background: #00b8e6;
+}
+
+/* Collapse toggle button - Neon glow effect */
+.neon-glow {
+    display: block;
+    padding: 12px;
+    background: rgba(50, 50, 70, 0.8);
+    color: #fff;
     border: none;
-    padding: 10px;
-    margin: 5px;
+    border-radius: 10px;
     cursor: pointer;
-    border-radius: 5px;
+    font-size: 1.2rem;
+    margin-bottom: 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.5), inset 0 0 5px rgba(0, 212, 255, 0.3);
+}
+.neon-glow:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(0, 212, 255, 0.8), inset 0 0 10px rgba(0, 212, 255, 0.5);
 }
 
-.button:focus {
+/* Hide checkbox */
+.collapse-checkbox { display: none; }
+
+/* Collapsible content - Fade-in animation */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    opacity: 1;
+    transform: translateX(0);
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+#collapse-toggle:checked ~ .fade-in {
+    opacity: 0;
+    transform: translateX(-100%);
+    pointer-events: none;
+}
+#collapse-toggle:checked ~ .neon-glow i { transform: rotate(180deg); }
+#collapse-toggle:checked ~ .glass-effect {
+    transform: translateX(-100%);
+    width: 0;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: none;
+    border: none;
+    visibility: hidden;
+    opacity: 0;
+    transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease, visibility 0s;
+}
+
+/* Title - Gradient text effect */
+.gradient-text {
+    font-size: 2rem;
+    margin-bottom: 25px;
+    text-align: center;
+    background: linear-gradient(90deg, #00d4ff, #00b8e6, #00d4ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 15px rgba(0, 212, 255, 0.7);
+    font-weight: 700;
+    animation: glowPulse 2s infinite alternate;
+}
+@keyframes glowPulse {
+    0% { text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); }
+    100% { text-shadow: 0 0 20px rgba(0, 212, 255, 0.9); }
+}
+
+/* Button styles - Neon buttons with hover effects */
+.neon-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 18px;
+    margin: 6px 0;
+    background: rgba(60, 60, 80, 0.8);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3), inset 0 0 5px rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+.neon-btn i { margin-right: 8px; }
+.neon-btn:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5), inset 0 0 10px rgba(0, 212, 255, 0.3);
+}
+.neon-btn.primary { background: linear-gradient(135deg, #007bff, #00d4ff); }
+.neon-btn.primary:hover { background: linear-gradient(135deg, #0056b3, #00b8e6); }
+.neon-btn.danger { background: linear-gradient(135deg, #dc3545, #ff5e6e); }
+.neon-btn.danger:hover { background: linear-gradient(135deg, #b02a37, #e04b5a); }
+.neon-btn.success { background: linear-gradient(135deg, #28a745, #40c75f); }
+.neon-btn.success:hover { background: linear-gradient(135deg, #218838, #35a54d); }
+.neon-btn.warning { background: linear-gradient(135deg, #ffc107, #ffd950); }
+.neon-btn.warning:hover { background: linear-gradient(135deg, #e0a800, #e6c32e); }
+
+/* Action group for buttons */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+/* Input section - Glowing inputs */
+.input-section { margin-bottom: 20px; }
+.input-label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    color: #00d4ff;
+    font-weight: 500;
+    text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+}
+.glow-input {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+input[type="url"], input[type="file"] {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(40, 40, 60, 0.8);
+    color: #fff;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+input[type="url"]:focus, input[type="file"]:focus {
+    border-color: #00d4ff;
     outline: none;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5), inset 0 0 8px rgba(0, 212, 255, 0.3);
+}
+input[type="url"]::placeholder { color: #a0a0c0; }
+
+/* Remove controls - Smooth transition */
+.remove-controls {
+    margin-top: 20px;
+    transition: opacity 0.4s ease, max-height 0.4s ease;
+    max-height: 120px;
+    overflow: hidden;
+}
+.remove-controls.hidden {
+    opacity: 0;
+    max-height: 0;
+    margin-top: 0;
+    padding: 0;
 }
 
-.button i {
-    font-size: 18px;
+/* Slider section - Custom glowing sliders */
+.slider-section { margin-bottom: 20px; }
+.custom-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 8px;
+    background: linear-gradient(90deg, #00d4ff, #007bff);
+    border-radius: 12px;
+    outline: none;
+    transition: background 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
 }
+.custom-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.8), inset 0 0 5px rgba(0, 212, 255, 0.5);
+    transition: transform 0.3s ease;
+}
+.custom-slider::-webkit-slider-thumb:hover { transform: scale(1.2); }
+.custom-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.8), inset 0 0 5px rgba(0, 212, 255, 0.5);
+    transition: transform 0.3s ease;
+}
+.custom-slider::-moz-range-thumb:hover { transform: scale(1.2); }
+
+/* Canvas styling */
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    transition: filter 0.3s ease;
+}
+canvas:hover { filter: brightness(1.05); } /* Subtle hover effect for canvas */

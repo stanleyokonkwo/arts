@@ -1,354 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <link rel="stylesheet" href="index.css" />
-
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page screenshorter</title>
-
-    <!-- Import map to resolve module specifiers -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Screenshot Viewer</title>
     <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
-            "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+                "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
+            }
         }
-    }
     </script>
 </head>
 <body>
-<div style=" background-color: rgb(255, 255, 255);">
-    <div>
-    <button id="shuffleBtn">Shuffle</button>
-    <button id="prevPage">Previous Page</button>
-    <button id="nextPage">Next Page</button>
-</div>
-
-<form id="screenshotForm">
-    <label for="url">Enter Website URL:</label>
-    <input type="url" id="url" name="url" required>
-    <button type="submit">Capture Webpages</button>
-</form>
-<button id="toggleRotateBtn">Toggle Rotation</button>
-
-<div>
-    <label for="radiusSlider">Adjust Radius:</label>
-    <input type="range" id="radiusSlider" min="2" max="10" step="0.1" value="4">
-    <span id="radiusValue">4.0</span>
-</div>
-
-<div>
-    <label for="zoomSlider">Adjust Zoom:</label>
-    <input type="range" id="zoomSlider" min="2" max="10" step="0.1" value="3">
-    <span id="zoomValue">3.0</span>
-</div>
-<button id="downloadBtn">Download Rendered Image</button>
-</div>
-
-    <script type="module">
-
-document.getElementById('downloadBtn').addEventListener('click', () => {
-    // Temporarily set the renderer to 1920x1080 for higher quality capture
-    const originalSize = { width: renderer.domElement.width, height: renderer.domElement.height };
-    
-    renderer.setSize(1920, 1080, false);
-    renderer.setPixelRatio(window.devicePixelRatio); // Ensure sharp rendering
-    renderer.render(scene, camera); // Ensure latest render
-    
-    const imgData = renderer.domElement.toDataURL('image/png'); // Convert to PNG format
-
-    const link = document.createElement('a');
-    link.href = imgData;
-    link.download = 'rendered_image.png';
-    link.click(); // Trigger download
-
-    console.log('📸 Screenshot captured in Full HD and ready for download');
-
-    // Restore original renderer size
-    renderer.setSize(originalSize.width, originalSize.height, false);
-});
-
-
-
-
-
-
-const zoomSlider = document.getElementById('zoomSlider');
-const zoomValue = document.getElementById('zoomValue');
-
-zoomSlider.addEventListener('input', () => {
-    const zoomLevel = parseFloat(zoomSlider.value);
-    zoomValue.textContent = zoomLevel.toFixed(1);
-    
-    camera.position.z = zoomLevel; // Update camera zoom dynamically
-    camera.updateProjectionMatrix(); // Apply changes
-
-    console.log(`🔍 Zoom level updated: ${zoomLevel}`);
-});
-
-
-
-const radiusSlider = document.getElementById('radiusSlider');
-const radiusValue = document.getElementById('radiusValue');
-
-let radius = parseFloat(radiusSlider.value); // Initial radius
-
-radiusSlider.addEventListener('input', () => {
-    radius = parseFloat(radiusSlider.value);
-    radiusValue.textContent = radius.toFixed(1);
-    updateImagePositions(); // Update image positions dynamically
-});
-
-// Function to reposition images based on the new radius
-const updateImagePositions = () => {
-    const images = scene.children.filter(obj => obj instanceof THREE.Mesh);
-    const angleIncrement = (2 * Math.PI) / images.length;
-
-    images.forEach((mesh, index) => {
-        const angle = index * angleIncrement;
-        mesh.position.x = radius * Math.cos(angle);
-        mesh.position.z = radius * Math.sin(angle);
-        mesh.lookAt(0, 0, 0); // Ensure images face the center
-    });
-
-    console.log(`🔄 Updated radius: ${radius}`);
-};
-
-
-        document.getElementById('screenshotForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const url = document.getElementById('url').value;
-            if (!url) {
-                alert('Please enter a valid URL.');
-                return;
-            }
-
-            try {
-                const response = await fetch('http://localhost:3000/api/capture', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url })
-                });
-                const result = await response.json();
-                alert(result.message);
-                loadImages(); // Refresh the screenshot list
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to capture screenshot.');
-            }
-        });
-
-     import * as THREE from 'three';
-import { OrbitControls } from 'OrbitControls';
-
-console.log('🚀 Three.js script loaded');
-
-const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.z = 3;
-
-
-const renderer = new THREE.WebGLRenderer({ 
-    alpha: true,  // Keep transparency
-    antialias: true,
-    preserveDrawingBuffer: true // Ensures transparency when downloading
-});
-
-// Do not set a background color in WebGL (keeps transparency)
-renderer.setClearColor(0x000000, 0);
-
-// Ensure sharp rendering
-renderer.setPixelRatio(window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-// Apply black background using CSS
-document.body.style.backgroundColor = "black";
-
-renderer.setPixelRatio(window.devicePixelRatio); // High-quality rendering
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-window.addEventListener('resize', () => {
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix(); // Prevent stretching
-});
-
-
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.maxDistance = 5;
-controls.minDistance = 2;
-console.log('🎮 OrbitControls initialized');
-
-const textureLoader = new THREE.TextureLoader();
-
-// Helper function to load texture asynchronously
-const loadTexture = (filename) => {
-    return new Promise((resolve, reject) => {
-        const texturePath = `http://localhost:3000/screenshots/${filename}`;
-        console.log(`🖼 Loading texture: ${texturePath}`);
-
-        textureLoader.load(texturePath,
-            (tex) => {
-                console.log(`✅ Successfully loaded: ${filename}`);
-                tex.minFilter = THREE.LinearFilter;  // Better quality scaling
-                tex.magFilter = THREE.LinearFilter;
-                tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-                resolve(tex);
-            },
-            undefined,
-            (err) => {
-                console.error(`❌ Failed to load texture: ${filename}`, err);
-                reject(err);
-            }
-        );
-    });
-};
-
-
-(function() {
-  let images = [];  
-  let removedImages = [];  
-
-  const loadImages = async () => {
-      try {
-          const response = await fetch('http://localhost:3000/api/screenshots');
-          const data = await response.json();
-
-          if (!data.screenshots || data.screenshots.length === 0) {
-              console.warn('⚠ No screenshots found');
-              return;
-          }
-
-          data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-
-          const radius = 3.5; 
-          const angleIncrement = (2 * Math.PI) / data.screenshots.length; 
-
-          let index = 0;
-          for (const filename of data.screenshots) {
-              try {
-                  const texture = await loadTexture(filename);
-                  const aspectRatio = texture.image.width / texture.image.height;
-                  const planeHeight = window.innerHeight / 300;
-                  const planeWidth = planeHeight * aspectRatio;
-
-                  const angle = index * angleIncrement;
-                  const x = radius * Math.cos(angle);
-                  const z = radius * Math.sin(angle);
-
-                  const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
-                  const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
-                  const mesh = new THREE.Mesh(geometry, material);
-                  mesh.position.set(x, 0, z); 
-                  mesh.lookAt(0, 0, 0); 
-
-                  const removeBtn = document.createElement('button');
-                  removeBtn.textContent = 'Remove';
-                  removeBtn.addEventListener('click', () => {
-                      scene.remove(mesh);  
-                      removeBtn.style.display = 'none'; 
-
-                      removedImages.push({ mesh, filename });
-                      console.log(`🗑️ Removed image: ${filename}`);
-
-                      
-                      images = images.filter(img => img.filename !== filename);
-
-                      // Update positions of the remaining images
-                      updateImagePositions();
-                  });
-
-                  // Append remove button to the body or somewhere near the image
-                  document.body.appendChild(removeBtn);
-
-                  scene.add(mesh);
-                  images.push({ mesh, filename });  // Add image to the array
-                  console.log(`🛠 Layer added: ${filename} at position (${x}, 0, ${z})`);
-                  index++;
-              } catch (error) {
-                  console.warn(`⚠ Skipping texture: ${filename}`);
-              }
-          }
-      } catch (error) {
-          console.error('❌ Error fetching images:', error);
-      }
-  };
-
-  const updateImagePositions = () => {
-      const remainingImages = scene.children.filter(obj => obj instanceof THREE.Mesh);
-      const angleIncrement = (2 * Math.PI) / remainingImages.length;
-
-      remainingImages.forEach((mesh, index) => {
-          const angle = index * angleIncrement;
-          mesh.position.x = 3.5 * Math.cos(angle); 
-          mesh.position.z = 3.5 * Math.sin(angle);
-          mesh.lookAt(0, 0, 0); 
-      });
-
-      console.log(`🔄 Updated positions of images after removal`);
-  };
-
-  loadImages();
-})();
-
-
-
-
-let autoRotate = false; // Initially set to manual rotation
-
-// Function to toggle auto-rotation
-document.getElementById('toggleRotateBtn').addEventListener('click', () => {
-    autoRotate = !autoRotate;
-    console.log(autoRotate ? '🔄 Auto-rotate enabled' : '🛑 Auto-rotate disabled');
-});
-
-// Update the animate function
-const animate = () => {
-    requestAnimationFrame(animate);
-
-    if (autoRotate) {
-        scene.rotation.y += 0.002; // Rotate when auto mode is on
-    }
-
-    controls.update();
-    renderer.render(scene, camera);
-};
-
-console.log('🎬 Animation started');
-animate();
-
-
-
-console.log('🎬 Animation started');
-animate();
-
-window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    console.log('🔄 Window resized');
-});
-
-document.getElementById('shuffleBtn').addEventListener('click', () => {
-    scene.rotation.y += Math.PI / 8;
-});
-
-document.getElementById('prevPage').addEventListener('click', () => {
-    scene.rotation.y -= Math.PI / 8; 
-});
-
-document.getElementById('nextPage').addEventListener('click', () => {
-    scene.rotation.y += Math.PI / 8; 
-});
-
-    </script>
-    
-    
+    <div class="controls-container glass-effect">
+        <label for="collapse-toggle" class="collapse-toggle neon-glow">
+            <i class="fas fa-bars"></i>
+        </label>
+        <input type="checkbox" id="collapse-toggle" class="collapse-checkbox" />
+        
+        <h1 class="title gradient-text">3D Screenshot Viewer</h1>
+        <div class="collapsible-content fade-in">
+            <div class="button-group action-buttons">
+                <button id="shuffleBtn" class="btn neon-btn"><i class="fas fa-random"></i> Shuffle</button>
+                <button id="prevPage" class="btn neon-btn"><i class="fas fa-arrow-left"></i> Previous</button>
+                <button id="nextPage" class="btn neon-btn"><i class="fas fa-arrow-right"></i> Next</button>
+            </div>
+
+            <div class="button-group action-buttons">
+                <button id="startRecordingBtn" class="btn primary neon-btn"><i class="fas fa-video"></i> Start Recording</button>
+                <button id="stopRecordingBtn" class="btn danger neon-btn"><i class="fas fa-stop"></i> Stop Recording</button>
+            </div>
+
+            <form id="screenshotForm" class="form-group input-section">
+                <label for="url" class="input-label">Capture Website:</label>
+                <div class="input-group glow-input">
+                    <input type="url" id="url" name="url" placeholder="https://example.com" required />
+                    <button type="submit" class="btn primary neon-btn"><i class="fas fa-camera"></i> Capture</button>
+                </div>
+            </form>
+
+            <form id="uploadForm" class="form-group input-section" enctype="multipart/form-data">
+                <label for="images" class="input-label">Upload Images:</label>
+                <div class="input-group glow-input">
+                    <input type="file" id="images" name="images" multiple accept="image/*" />
+                    <button type="submit" class="btn primary neon-btn"><i class="fas fa-upload"></i> Upload</button>
+                </div>
+            </form>
+
+            <button id="toggleRotateBtn" class="btn neon-btn"><i class="fas fa-sync-alt"></i> Toggle Rotation</button>
+
+            <div class="button-group action-buttons">
+                <button id="toggleViewBtn" class="btn warning neon-btn"><i class="fas fa-globe"></i> Toggle View</button>
+                <button id="toggleRemoveBtn" class="btn warning neon-btn"><i class="fas fa-toggle-on"></i> Toggle Remove</button>
+            </div>
+
+            <div id="removeControls" class="remove-controls" style="display: none;">
+                <button id="removeBtn" class="btn danger neon-btn"><i class="fas fa-trash"></i> Remove</button>
+                <button id="removeAllBtn" class="btn danger neon-btn"><i class="fas fa-trash-alt"></i> Remove All</button>
+            </div>
+
+            <div class="slider-group slider-section">
+                <label for="radiusSlider" class="input-label">Radius: <span id="radiusValue">5.0</span></label>
+                <input type="range" id="radiusSlider" min="2" max="10" step="0.1" value="5" class="custom-slider" />
+            </div>
+
+            <div class="slider-group slider-section">
+                <label for="zoomSlider" class="input-label">Zoom: <span id="zoomValue">10.0</span></label>
+                <input type="range" id="zoomSlider" min="0.1" max="10" step="0.1" value="10" class="custom-slider" />
+            </div>
+
+            <button id="downloadBtn" class="btn success neon-btn"><i class="fas fa-download"></i> Download Image</button>
+        </div>
+    </div>
+
+    <script type="module" src="mockup.js"></script>
 </body>
 </html>
