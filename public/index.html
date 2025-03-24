@@ -1,82 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <link rel="stylesheet" href="index.css" />
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Screenshot Viewer</title>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
-                "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js"
-            }
-        }
-    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArtSphere - Surreal Digital Dreams</title>
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="controls-container glass-effect">
-        <label for="collapse-toggle" class="collapse-toggle neon-glow">
-            <i class="fas fa-bars"></i>
-        </label>
-        <input type="checkbox" id="collapse-toggle" class="collapse-checkbox" />
-        
-        <h1 class="title gradient-text">3D Screenshot Viewer</h1>
-        <div class="collapsible-content fade-in">
-            <div class="button-group action-buttons">
-                <button id="shuffleBtn" class="btn neon-btn"><i class="fas fa-random"></i> Shuffle</button>
-                <button id="prevPage" class="btn neon-btn"><i class="fas fa-arrow-left"></i> Previous</button>
-                <button id="nextPage" class="btn neon-btn"><i class="fas fa-arrow-right"></i> Next</button>
-            </div>
+    <header class="header">
+        <nav class="nav">
+            <h1 class="logo">ArtSphere</h1>
+            <ul class="nav-links">
+                <li><a href="creative" class="nav-link">Virtual Gallery</a></li>
+                <li><a href="imageexplorer" class="nav-link">360 Explorer</a></li>
+               
+            </ul>
+            <button id="theme-toggle" class="theme-btn">Toggle Theme</button>
+        </nav>
+    </header>
 
-            <div class="button-group action-buttons">
-                <button id="startRecordingBtn" class="btn primary neon-btn"><i class="fas fa-video"></i> Start Recording</button>
-                <button id="stopRecordingBtn" class="btn danger neon-btn"><i class="fas fa-stop"></i> Stop Recording</button>
-            </div>
-
-            <form id="screenshotForm" class="form-group input-section">
-                <label for="url" class="input-label">Capture Website:</label>
-                <div class="input-group glow-input">
-                    <input type="url" id="url" name="url" placeholder="https://example.com" required />
-                    <button type="submit" class="btn primary neon-btn"><i class="fas fa-camera"></i> Capture</button>
-                </div>
-            </form>
-
-            <form id="uploadForm" class="form-group input-section" enctype="multipart/form-data">
-                <label for="images" class="input-label">Upload Images:</label>
-                <div class="input-group glow-input">
-                    <input type="file" id="images" name="images" multiple accept="image/*" />
-                    <button type="submit" class="btn primary neon-btn"><i class="fas fa-upload"></i> Upload</button>
-                </div>
-            </form>
-
-            <button id="toggleRotateBtn" class="btn neon-btn"><i class="fas fa-sync-alt"></i> Toggle Rotation</button>
-
-            <div class="button-group action-buttons">
-                <button id="toggleViewBtn" class="btn warning neon-btn"><i class="fas fa-globe"></i> Toggle View</button>
-                <button id="toggleRemoveBtn" class="btn warning neon-btn"><i class="fas fa-toggle-on"></i> Toggle Remove</button>
-            </div>
-
-            <div id="removeControls" class="remove-controls" style="display: none;">
-                <button id="removeBtn" class="btn danger neon-btn"><i class="fas fa-trash"></i> Remove</button>
-                <button id="removeAllBtn" class="btn danger neon-btn"><i class="fas fa-trash-alt"></i> Remove All</button>
-            </div>
-
-            <div class="slider-group slider-section">
-                <label for="radiusSlider" class="input-label">Radius: <span id="radiusValue">5.0</span></label>
-                <input type="range" id="radiusSlider" min="2" max="10" step="0.1" value="5" class="custom-slider" />
-            </div>
-
-            <div class="slider-group slider-section">
-                <label for="zoomSlider" class="input-label">Zoom: <span id="zoomValue">10.0</span></label>
-                <input type="range" id="zoomSlider" min="0.1" max="10" step="0.1" value="10" class="custom-slider" />
-            </div>
-
-            <button id="downloadBtn" class="btn success neon-btn"><i class="fas fa-download"></i> Download Image</button>
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="hero-explorer">
+            <video autoplay muted loop class="hero-video">
+                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="hero-overlay"></div>
         </div>
-    </div>
+        <div class="hero-content">
+            <h2 class="hero-title">Unleash Art in 3D</h2>
+            <p class="hero-subtitle">Drift into a surreal realm where creativity bends reality—explore the impossible.</p>
+            <div class="cta-container">
+                <a href="creative" class="cta-btn primary">Dive into 3D virtual Art Gallery</a>
+                <a href="imageexplorer" class="cta-btn secondary">Try 360 Image explorer</a>
+            </div>
+        </div>
+    </section>
 
-    <script type="module" src="mockup.js"></script>
+    <section id="galleries" class="galleries">
+        <h3 class="section-title">Explore Our Virtual Galleries</h3>
+        <div class="gallery-grid">
+            
+            <a href="modern" class="gallery-card">
+                <img src="https://i.ibb.co/whf77FXV/gallery-view-19.png" alt="Modern Art Gallery" class="gallery-img">
+                <div class="gallery-info">
+                    <h4 class="gallery-title">Modern Art</h4>
+                    <p class="gallery-desc">A vibrant collection of contemporary pieces with bold colors and abstract forms.</p>
+                </div>
+            </a>
+
+            
+            <a href="creative" class="gallery-card">
+                <img src="https://i.ibb.co/bSqwc5h/gallery-view-20.png" alt="Classical Gallery" class="gallery-img">
+                <div class="gallery-info">
+                    <h4 class="gallery-title">Classical</h4>
+                    <p class="gallery-desc">Timeless masterpieces reimagined in a 3D space with intricate details.</p>
+                </div>
+            </a>
+            <a href="creative" class="gallery-card">
+                <img src="https://i.ibb.co/JRxxf7Bv/museum-view-6.png" alt="Surreal Gallery" class="gallery-img">
+                <div class="gallery-info">
+                    <h4 class="gallery-title">Surreal</h4>
+                    <p class="gallery-desc">Dreamlike scenes that defy reality, brought to life with immersive effects.</p>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <h3 class="section-title">A New Way to Experience Virtual World</h3>
+        <div class="features-container">
+            <div class="feature-card card-1">
+                <h4 class="card-title">3D Virtual Gallery</h4>
+                <p class="card-desc">Want to experience 3d virtual gallery without need for VR or any devices? This is the perfect tool you need. Great for creatives, businesses, photography, exhibtions etc..</p>
+                <div class="card-decor"></div>
+            </div>
+            <div class="feature-card card-2">
+                <h4 class="card-title">360 Image Explorer</h4>
+                <p class="card-desc">Interact with your uploaded images in a fully navigable 3d 360 environment and also download the scene as image or real-time hd recording.</p>
+                <div class="card-decor"></div>
+            </div>
+            <div class="feature-card card-3">
+                <h4 class="card-title">Internal 3d website screenshoter</h4>
+                <p class="card-desc">Wonders what's feel like visualising screenshots of your website in a 360 environment and with options to download ? This tool allows internal capture of websites and allows you edit.</p>
+                <div class="card-decor"></div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="wave"></div>
+        <div class="footer-content">
+            <p class="footer-text">© 2025 ArtSphere. Crafted with passion.</p>
+            <div class="social-links">
+                <a href="https://wa.link/422ieh" class="">WhatsApp</a>
+                
+            </div>
+        </div>
+    </footer>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            themeToggle.textContent = document.body.classList.contains('dark') ? 'Light Theme' : 'Dark Theme';
+        });
+
+        // Scroll Animation for Features and Galleries
+        const animatedElements = document.querySelectorAll('.feature-card, .gallery-card');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.2 });
+
+        animatedElements.forEach(element => observer.observe(element));
+
+        // Gallery Card Hover Effects
+        const galleryCards = document.querySelectorAll('.gallery-card');
+        galleryCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const img = card.querySelector('.gallery-img');
+                const info = card.querySelector('.gallery-info');
+                img.style.transform = 'scale(1.1) rotate(5deg)';
+                info.style.transform = 'translateY(-15px)';
+                info.style.opacity = '1';
+            });
+
+            card.addEventListener('mouseleave', () => {
+                const img = card.querySelector('.gallery-img');
+                const info = card.querySelector('.gallery-info');
+                img.style.transform = 'scale(1)';
+                info.style.transform = 'translateY(0)';
+                info.style.opacity = '0.8';
+            });
+        });
+    });
+    </script>
 </body>
 </html>

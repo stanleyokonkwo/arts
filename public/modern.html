@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modern Virtual Art Gallery with Animation Tools</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="virtual.css" />
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+                "PointerLockControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/PointerLockControls.js",
+                "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js",
+                "GLTFLoader": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/loaders/GLTFLoader.js"
+            }
+        }
+    </script>
+    <style>
+        /* Add basic modal styles; refine in index.css as needed */
+        #metadataModal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            color: white;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        #metadataModal input {
+            display: block;
+            margin: 10px 0;
+            width: 100%;
+            padding: 5px;
+        }
+        #metadataModal button {
+            margin: 10px 5px 0 0;
+            padding: 5px 10px;
+            background: #1e90ff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #metadataModal button.cancel {
+            background: #ff4444;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-overlay">
+        <!-- Existing UI elements unchanged -->
+        <button id="toggleControlsBtn" class="glow-btn toggle-controls-btn">Hide Controls</button>
+        <div class="control-panel top-panel">
+            <h1 class="title">3D Virtual Art Gallery</h1>
+            <div class="button-group">
+                <div class="action-group">
+                    <button id="downloadBtn" class="glow-btn">Download View</button>
+                    <span id="downloadStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                </div>
+                <div class="action-group">
+                    <button id="recordBtn" class="glow-btn">Start Recording</button>
+                    <span id="recordStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                </div>
+                <div class="action-group">
+                    <button id="autoRotateBtn" class="glow-btn">Auto Rotate</button>
+                </div>
+                <div class="action-group">
+                    <button id="animateObjectsBtn" class="glow-btn">Animate Objects</button>
+                </div>
+                <div class="action-group">
+                    <a href="."><button id="" class="glow-btn">Home</button></a>
+                </div>
+            </div>
+        </div>
+        <div class="control-panel sidebar left-sidebar">
+            <form id="uploadForm" class="form-group">
+                <h3>Upload Images</h3>
+                <input type="file" id="images" multiple accept="image/*">
+                <div id="previewContainer" class="preview-container"></div>
+                <div class="action-group">
+                    <button type="submit" class="glow-btn submit-btn">Upload</button>
+                    <span id="uploadStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                </div>
+            </form>
+            <form id="screenshotForm" class="form-group">
+                <h3>Capture Screenshot</h3>
+                <input type="text" id="url" placeholder="Enter URL">
+                <div class="action-group">
+                    <button type="submit" class="glow-btn submit-btn">Capture</button>
+                    <span id="screenshotStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                </div>
+            </form>
+        </div>
+        <div class="control-panel sidebar right-sidebar">
+            <div class="slider-group">
+                <label for="zoomSlider">Zoom: <span id="zoomValue">5.0</span></label>
+                <input type="range" id="zoomSlider" min="0.5" max="10" step="0.1" value="5">
+            </div>
+            <div class="slider-group">
+                <label for="sensitivitySlider">Sensitivity: <span id="sensitivityValue">0.001</span></label>
+                <input type="range" id="sensitivitySlider" min="0.001" max="0.01" step="0.001" value="0.001">
+            </div>
+            <div class="slider-group">
+                <label for="animationSpeedSlider">Animation Speed: <span id="animationSpeedValue">1.0</span></label>
+                <input type="range" id="animationSpeedSlider" min="0.1" max="2.0" step="0.1" value="1.0">
+            </div>
+        </div>
+        <div id="imageSliderContainer" class="image-slider hidden">
+            <div class="slider-content">
+                <img id="sliderImage" src="" alt="Selected Artwork">
+                <div class="slider-controls">
+                    <button id="prevImage" class="glow-btn slider-btn">←</button>
+                    <span id="sliderIndex">1 / 1</span>
+                    <button id="nextImage" class="glow-btn slider-btn">→</button>
+                    <button id="closeSlider" class="glow-btn slider-btn">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Metadata Modal -->
+    <div id="metadataModal">
+        <h3>Enter Image Metadata</h3>
+        <div id="metadataInputs"></div>
+        <button id="submitMetadata">Submit</button>
+        <button id="cancelMetadata" class="cancel">Cancel</button>
+    </div>
+    <script type="module" src="modern1_Secured.js"></script>
+</body>
+</html>

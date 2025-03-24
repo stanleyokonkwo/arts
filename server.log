@@ -1,0 +1,54 @@
+{"dir":"C:\\Users\\THIS-PC\\Videos\\pagesaver\\screenshots","level":"info","message":"Base screenshot directory ensured","timestamp":"2025-02-25T00:46:46.490Z"}
+{"level":"info","message":"Write permissions confirmed for outputDir","timestamp":"2025-02-25T00:46:46.506Z"}
+{"level":"info","message":"Puppeteer browser launched","timestamp":"2025-02-25T00:46:48.956Z"}
+{"level":"info","message":"Server running at http://localhost:3000","timestamp":"2025-02-25T00:46:49.020Z"}
+{"files":["/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_0.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_1.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_2.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_3.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_4.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_5.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_6.png"],"level":"info","message":"Found 7 images","sessionId":"513e2fc2-9757-48ab-b414-325d463ee547","timestamp":"2025-02-25T00:46:57.626Z"}
+{"level":"info","message":"Capturing screenshots for https://www.hostinger.com/","sessionId":"6c7aad7c-813f-4581-a9ae-9b71c608bcdc","timestamp":"2025-02-25T00:49:56.727Z"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T00:50:00.081Z"}
+{"level":"info","message":"Clicked cookie consent","timestamp":"2025-02-25T00:50:21.151Z"}
+{"error":"page.waitForTimeout is not a function","level":"error","message":"Screenshot capture failed","sessionId":"6c7aad7c-813f-4581-a9ae-9b71c608bcdc","timestamp":"2025-02-25T00:50:21.277Z","url":"https://www.hostinger.com/"}
+{"files":["/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_0.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_1.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_2.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_3.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_4.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_5.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_6.png"],"level":"info","message":"Found 7 images","sessionId":"513e2fc2-9757-48ab-b414-325d463ee547","timestamp":"2025-02-25T00:52:08.570Z"}
+{"dir":"C:\\Users\\THIS-PC\\Videos\\pagesaver\\screenshots","level":"info","message":"Base screenshot directory ensured","timestamp":"2025-02-25T01:09:27.645Z"}
+{"level":"info","message":"Write permissions confirmed for outputDir","timestamp":"2025-02-25T01:09:27.688Z"}
+{"level":"info","message":"Puppeteer browser launched","timestamp":"2025-02-25T01:09:40.043Z"}
+{"level":"info","message":"Server running at http://localhost:3000","timestamp":"2025-02-25T01:09:40.404Z"}
+{"files":["/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_0.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_1.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_2.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_3.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_4.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_5.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_6.png"],"level":"info","message":"Found 7 images","sessionId":"513e2fc2-9757-48ab-b414-325d463ee547","timestamp":"2025-02-25T01:11:25.644Z"}
+{"level":"info","message":"Capturing screenshots for https://www.hostinger.com/","sessionId":"95075e21-90cf-42c7-ab1f-b71d1ca27e60","timestamp":"2025-02-25T01:14:29.201Z"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:14:43.279Z"}
+{"level":"info","message":"Clicked cookie consent","timestamp":"2025-02-25T01:15:10.645Z"}
+{"level":"warn","message":"Retrying screenshot capture","retriesLeft":1,"timestamp":"2025-02-25T01:15:15.197Z","url":"https://www.hostinger.com/"}
+{"error":"Protocol error: Connection closed. Most likely the page has been closed.","level":"error","message":"Screenshot capture failed","sessionId":"95075e21-90cf-42c7-ab1f-b71d1ca27e60","timestamp":"2025-02-25T01:15:16.105Z","url":"https://www.hostinger.com/"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:15:16.117Z"}
+{"level":"info","message":"No consent button found","timestamp":"2025-02-25T01:15:26.512Z"}
+{"level":"warn","message":"Retrying screenshot capture","retriesLeft":0,"timestamp":"2025-02-25T01:15:31.098Z","url":"https://www.hostinger.com/"}
+{"dir":"C:\\Users\\THIS-PC\\Videos\\pagesaver\\screenshots","level":"info","message":"Base screenshot directory ensured","timestamp":"2025-02-25T01:16:08.596Z"}
+{"level":"info","message":"Write permissions confirmed for outputDir","timestamp":"2025-02-25T01:16:08.620Z"}
+{"level":"info","message":"Puppeteer browser launched","timestamp":"2025-02-25T01:16:10.985Z"}
+{"level":"info","message":"Server running at http://localhost:3000","timestamp":"2025-02-25T01:16:11.047Z"}
+{"level":"info","message":"Capturing screenshots for https://www.hostinger.com/","sessionId":"48edc14b-d128-4287-8f21-83d5432a43f7","timestamp":"2025-02-25T01:16:17.423Z"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:16:18.504Z"}
+{"level":"info","message":"Clicked cookie consent","timestamp":"2025-02-25T01:16:42.055Z"}
+{"level":"warn","message":"Retrying screenshot capture","retriesLeft":1,"timestamp":"2025-02-25T01:16:46.605Z","url":"https://www.hostinger.com/"}
+{"error":"Protocol error: Connection closed. Most likely the page has been closed.","level":"error","message":"Screenshot capture failed","sessionId":"48edc14b-d128-4287-8f21-83d5432a43f7","timestamp":"2025-02-25T01:16:46.977Z","url":"https://www.hostinger.com/"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:16:47.006Z"}
+{"level":"info","message":"No consent button found","timestamp":"2025-02-25T01:16:57.458Z"}
+{"level":"warn","message":"Retrying screenshot capture","retriesLeft":0,"timestamp":"2025-02-25T01:17:02.002Z","url":"https://www.hostinger.com/"}
+{"dir":"C:\\Users\\THIS-PC\\Videos\\pagesaver\\screenshots","level":"info","message":"Base screenshot directory ensured","timestamp":"2025-02-25T01:21:23.674Z"}
+{"level":"info","message":"Write permissions confirmed for outputDir","timestamp":"2025-02-25T01:21:23.699Z"}
+{"level":"info","message":"Puppeteer browser launched","timestamp":"2025-02-25T01:21:26.394Z"}
+{"level":"info","message":"Server running at http://localhost:3000","timestamp":"2025-02-25T01:21:26.742Z"}
+{"files":["/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_0.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_1.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_2.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_3.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_4.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_5.png","/screenshots/513e2fc2-9757-48ab-b414-325d463ee547/section_6.png"],"level":"info","message":"Found 7 images","sessionId":"513e2fc2-9757-48ab-b414-325d463ee547","timestamp":"2025-02-25T01:21:41.772Z"}
+{"level":"info","message":"Capturing screenshots for https://www.hostinger.com/","sessionId":"8a4bdf47-f41a-430c-9f57-f9f809655ffc","timestamp":"2025-02-25T01:21:58.742Z"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:22:02.785Z"}
+{"level":"info","message":"Clicked cookie consent","timestamp":"2025-02-25T01:22:24.507Z"}
+{"error":"png screenshots do not support 'quality'.","level":"error","message":"Capture attempt failed","retries":2,"timestamp":"2025-02-25T01:22:29.047Z","url":"https://www.hostinger.com/"}
+{"level":"warn","message":"Retrying screenshot capture","retriesLeft":1,"timestamp":"2025-02-25T01:22:29.171Z","url":"https://www.hostinger.com/"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:22:29.469Z"}
+{"level":"info","message":"No consent button found","timestamp":"2025-02-25T01:22:42.192Z"}
+{"error":"png screenshots do not support 'quality'.","level":"error","message":"Capture attempt failed","retries":1,"timestamp":"2025-02-25T01:22:46.724Z","url":"https://www.hostinger.com/"}
+{"level":"warn","message":"Retrying screenshot capture","retriesLeft":0,"timestamp":"2025-02-25T01:22:46.890Z","url":"https://www.hostinger.com/"}
+{"level":"info","message":"Navigating to https://www.hostinger.com/","timestamp":"2025-02-25T01:22:47.171Z"}
+{"level":"info","message":"No consent button found","timestamp":"2025-02-25T01:22:55.305Z"}
+{"error":"png screenshots do not support 'quality'.","level":"error","message":"Capture attempt failed","retries":0,"timestamp":"2025-02-25T01:22:59.839Z","url":"https://www.hostinger.com/"}
+{"level":"info","message":"Page closed successfully","timestamp":"2025-02-25T01:22:59.968Z"}
+{"error":"png screenshots do not support 'quality'.","level":"error","message":"Screenshot capture failed","sessionId":"8a4bdf47-f41a-430c-9f57-f9f809655ffc","timestamp":"2025-02-25T01:22:59.970Z","url":"https://www.hostinger.com/"}
