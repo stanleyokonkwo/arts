@@ -952,7 +952,7 @@ class ThreeJSApp {
     
         while (attempt < maxRetries) {
             try {
-                const response = await fetch(`http://localhost:3000/api/screenshots/${sessionId}/`);
+                const response = await fetch(`/api/screenshots/${sessionId}/`);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const data = await response.json();
                 console.log("📸 Fetched data for session", sessionId, ":", data);
@@ -1516,7 +1516,7 @@ class ThreeJSApp {
         if (!url) return;
 
         try {
-            const response = await fetch("http://localhost:3000/api/capture", {
+            const response = await fetch("/api/capture", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url })
@@ -1548,7 +1548,7 @@ class ThreeJSApp {
         });
     
         try {
-            const response = await fetch(`http://localhost:3000/api/upload${this.sessionId ? `/${this.sessionId}` : ''}`, {
+            const response = await fetch(`/api/upload${this.sessionId ? `/${this.sessionId}` : ''}`, {
                 method: "POST",
                 body: formData
             });
