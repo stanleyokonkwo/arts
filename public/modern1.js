@@ -153,8 +153,49 @@ class ThreeJSApp {
         this.setupAudio();
         this.setupEventListeners();
         this.createAvatar();
+
+        this.isLoading = true;
+        this.showPreloader();
     }
 
+
+    showPreloader() {
+        const preloader = document.createElement('div');
+        preloader.id = 'preloader';
+        preloader.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+        `;
+        preloader.innerHTML = `
+            <div>
+                <p>Loading Gallery...</p>
+                <div style="width: 50px; height: 50px; border: 5px solid #fff; border-top: 5px solid #1e90ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            </div>
+        `;
+        document.body.appendChild(preloader);
+    }
+    hidePreloader() {
+        const preloader = document.getElementById('preloader');
+        if (preloader) {
+            preloader.style.transition = 'opacity 0.5s';
+            preloader.style.opacity = '0';
+            setTimeout(() => {
+                preloader.remove();
+                this.isLoading = false;
+            }, 500); // Match transition duration
+        }
+    }
 
     addLighting() {
         const ambientLight = new THREE.AmbientLight(0xffffff, this.config.ambientIntensity);
@@ -539,29 +580,35 @@ class ThreeJSApp {
         });
     }
 
-    init() {
-        console.log("🚀 Virtual Gallery loaded");
-        if (this.sessionId) this.loadImages(this.sessionId);
+    async init() {
+        console.log("🚀 Virtual Gallery loading...");
+        if (this.sessionId) await this.loadImages(this.sessionId);
+        await this.setupAudio(); // Ensure audio is loaded
         this.animate();
         window.addEventListener("resize", () => this.handleResize());
+        this.hidePreloader();
+        console.log("🚀 Virtual Gallery loaded");
     }
 
 
-   animate() {
+    animate() {
         requestAnimationFrame(() => this.animate());
-        this.time += 0.016;
-        this.update();
-        this.updateImageEffects();
-        this.renderer.render(this.scene, this.camera);
-        if (this.isMobile) this.controls.update();
-        this.updateAvatarPosition();
-        
-        if (this.isRecording) {
-            // Frame capture handled by MediaRecorder
+        if (!this.isLoading) { // Only update scene when loading is complete
+            this.time += 0.016;
+            this.update();
+            this.updateImageEffects();
+            this.renderer.render(this.scene, this.camera);
+            if (this.isMobile) this.controls.update();
+            this.updateAvatarPosition();
+            
+            if (this.isRecording) {
+                // Frame capture handled by MediaRecorder
+            }
+            this.animationMixer.update(0.016 * this.animationSpeed);
+            this.updateObjectAnimations();
         }
-        this.animationMixer.update(0.016 * this.animationSpeed);
-        this.updateObjectAnimations();
     }
+
 
 
     startRecording() {

@@ -89,6 +89,8 @@ class ScreenshotServer {
         this.app.post('/api/upload/:sessionId?', this.upload.array('images'), (req, res) => this.handleUpload(req, res));
 
         this.app.get('/:page?', (req, res) => {
+
+            
             const page = req.params.page || 'index';
             const filePath = path.join(this.__dirname, 'public', `${page}.html`);
 
@@ -153,7 +155,6 @@ class ScreenshotServer {
             res.status(500).json({ error: 'Failed to capture screenshot', details: error.message });
         }
     }
-
     async handleUpload(req, res) {
         const sessionId = req.params.sessionId || uuidv4();
         const sessionDir = path.join(this.outputDir, sessionId);
@@ -180,9 +181,10 @@ class ScreenshotServer {
                 console.log(`✅ Saved: ${filePath}`);
                 filePaths.push(`/screenshots/${sessionId}/${filename}`);
     
-                const title = req.body.title[i] || 'Untitled';
-                const description = req.body.description[i] || '';
-                const artist = req.body.artist[i] || 'Unknown';
+                // Make metadata optional with defaults if not provided
+                const title = Array.isArray(req.body.title) && req.body.title[i] ? req.body.title[i] : 'Untitled';
+                const description = Array.isArray(req.body.description) && req.body.description[i] ? req.body.description[i] : '';
+                const artist = Array.isArray(req.body.artist) && req.body.artist[i] ? req.body.artist[i] : 'Unknown';
                 metadata.push({ filename, title, description, artist });
             }
     

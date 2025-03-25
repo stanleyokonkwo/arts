@@ -362,28 +362,28 @@ this.showStatus("toggleViewStatus", false);
 }
 
 async loadImages(sessionId) {
-this.clearScene();
+    this.clearScene();
 
-try {
-    this.showStatus("toggleViewStatus", true);
-    const response = await fetch(`http://localhost:3000/api/screenshots/${sessionId}/`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    if (!data.screenshots?.length) {
-        this.showMessage("toggleViewStatus", "No screenshots found", "error");
-        return;
+    try {
+        this.showStatus("toggleViewStatus", true);
+        const response = await fetch(`/api/screenshots/${sessionId}`); // Correct endpoint
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+        if (!data.screenshots?.length) {
+            this.showMessage("toggleViewStatus", "No screenshots found", "error");
+            return;
+        }
+
+        // Use only screenshots, ignore metadata
+        this.imagesToLoad = data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+        this.updateImagePositions();
+        this.showMessage("toggleViewStatus", "Images loaded successfully", "success");
+    } catch (error) {
+        console.error("❌ Error fetching images:", error);
+        this.showMessage("toggleViewStatus", `Failed to load images: ${error.message}`, "error");
+    } finally {
+        this.showStatus("toggleViewStatus", false);
     }
-
-    data.screenshots.sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-    this.imagesToLoad = data.screenshots;
-    this.updateImagePositions();
-    this.showMessage("toggleViewStatus", "Images loaded successfully", "success");
-} catch (error) {
-    console.error("❌ Error fetching images:", error);
-    this.showMessage("toggleViewStatus", `Failed to load images: ${error.message}`, "error");
-} finally {
-    this.showStatus("toggleViewStatus", false);
-}
 }
 
 clearScene() {
@@ -645,7 +645,7 @@ if (!url) {
 this.showStatus("screenshotStatus", true);
 
 try {
-    const response = await fetch("http://localhost:3000/api/capture", {
+    const response = await fetch("/api/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
@@ -685,7 +685,7 @@ for (const file of fileInput.files) {
 }
 
 try {
-    const response = await fetch(`http://localhost:3000/api/upload${sessionId ? `/${sessionId}` : ''}`, {
+    const response = await fetch(`/api/upload${sessionId ? `/${sessionId}` : ''}`, {
         method: "POST",
         body: formData
     });
