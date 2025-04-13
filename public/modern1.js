@@ -98,9 +98,10 @@ class ThreeJSApp {
             this.controls = new CustomPointerLockControls(this.camera, this.renderer.domElement);
             this.controls.getObject().position.copy(initialSettings.position);
         }
-
+        
         this.images = [];
         this.sessionId = localStorage.getItem('sessionId');
+        this.shareUrl = null;
         this.textureLoader = new THREE.TextureLoader();
 
         this.audioListener = new THREE.AudioListener();
@@ -230,7 +231,7 @@ class ThreeJSApp {
         floorMaterial.normalMap = noiseTexture;
         floorMaterial.normalScale.set(0.05, 0.05);
     
-        const waveTexture = new THREE.TextureLoader().load('wave.jpg');
+        const waveTexture = new THREE.TextureLoader().load('/wave.jpg');
         waveTexture.wrapS = waveTexture.wrapT = THREE.RepeatWrapping;
         waveTexture.repeat.set(2, 1);
         const wallMaterial = new THREE.MeshStandardMaterial({
@@ -554,13 +555,13 @@ class ThreeJSApp {
 
     async setupAudio() {
         try {
-            const backgroundBuffer = await this.loadAudio('sweet.mp3');
+            const backgroundBuffer = await this.loadAudio('/sweet.mp3');
             this.backgroundAudio.setBuffer(backgroundBuffer);
             this.backgroundAudio.setLoop(true);
             this.backgroundAudio.setVolume(0.2);
             this.backgroundAudio.play();
 
-            const clickBuffer = await this.loadAudio('sweet.mp3');
+            const clickBuffer = await this.loadAudio('/sweet.mp3');
             this.clickSound.setBuffer(clickBuffer);
             this.clickSound.setVolume(0.5);
         } catch (error) {
@@ -580,7 +581,7 @@ class ThreeJSApp {
         });
     }
 
-    async init() {
+async init() {
         console.log("🚀 Virtual Gallery loading...");
         if (this.sessionId) await this.loadImages(this.sessionId);
         await this.setupAudio(); // Ensure audio is loaded
@@ -710,11 +711,22 @@ class ThreeJSApp {
     setupEventListeners() {
         const tutorial = document.createElement("div");
         tutorial.id = "tutorialOverlay";
-        tutorial.style.cssText = "position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); color:white; background:rgba(0,0,0,0.7); padding:20px; border-radius:5px; z-index:11; text-align:center;";
+      
         if (this.isMobile) {
-            tutorial.innerHTML = "Swipe to look around, pinch to zoom, tap artwork to focus, tap avatar for help.";
+            tutorial.innerHTML = `
+                Welcome to your 3D Gallery!<br>
+                • Swipe to look around.<br>
+                • Pinch to zoom.<br>
+                • Tap artwork to focus.<br>
+                • Tap avatar for help!
+            `;
+            tutorial.style.display = "none"; 
         } else {
-            tutorial.innerHTML = "Click to enter the gallery. Use W, A, S, D to move, Q/E to rotate, mouse to look up/down, double-click art to focus, click avatar for help.";
+            tutorial.innerHTML = `
+                Welcome to your 3D Gallery!<br>
+                Click anywhere to start exploring!
+            `;
+            tutorial.dataset.step = "start";
         }
         document.body.appendChild(tutorial);
 
@@ -725,7 +737,9 @@ class ThreeJSApp {
             this.renderer.domElement.addEventListener("click", () => {
                 if (!this.isLocked && !this.isFocused && !this.isSliderActive) {
                     this.controls.lock();
-                    tutorial.style.display = "none";
+                    if (tutorial.dataset.step === "start") {
+                        this.updateTutorialOnAction({ type: "click" }, tutorial);
+                    }
                 }
             });
             document.addEventListener("pointerlockchange", () => {
@@ -736,8 +750,19 @@ class ThreeJSApp {
             document.addEventListener("pointerlockerror", () => {
                 console.error("Pointer Lock failed");
             });
+            
+            document.addEventListener("click", (e) => this.updateTutorialOnAction(e, tutorial));
+            document.addEventListener("keydown", (e) => this.updateTutorialOnAction(e, tutorial));
         } else {
             tutorial.style.display = "none";
+        }
+
+        const shareBtn = document.getElementById("shareBtn");
+        if (shareBtn) {
+            shareBtn.addEventListener("click", () => this.handleShare());
+            console.log("✅ Share button listener attached");
+        } else {
+            console.error("❌ Share button not found in DOM");
         }
 
         document.getElementById("uploadForm")?.addEventListener("submit", (e) => this.handleUploadSubmit(e));
@@ -777,7 +802,7 @@ class ThreeJSApp {
             if (sensitivityGroup) sensitivityGroup.style.display = "none";
         }
 
-        // Slider event listeners
+        
         const prevBtn = document.getElementById('prevImage');
         const nextBtn = document.getElementById('nextImage');
         const closeBtn = document.getElementById('closeSlider');
@@ -798,7 +823,7 @@ class ThreeJSApp {
             this.closeSlider();
         });
 
-        // Arrow key handling for slider navigation
+        
         document.addEventListener('keydown', (event) => {
             if (this.isSliderActive) {
                 if (event.key === 'ArrowLeft') {
@@ -811,6 +836,156 @@ class ThreeJSApp {
             }
             this.onKeyDown(event);
         });
+    }
+
+   
+    async handleShare() {
+        console.log(`Share button clicked, sessionId: ${this.sessionId}`);
+
+        if (!this.images.length) {
+            this.showMessage('shareStatus', 'No images in the gallery to share', 'error');
+            console.warn('No images available for sharing');
+            return;
+        }
+
+        this.showStatus('shareStatus', true);
+
+        try {
+            // Get current HTML pathname (e.g., /creative.html)
+            const htmlPath = window.location.pathname;
+            console.log(`Sharing with htmlPath: ${htmlPath}`);
+
+            const response = await fetch(`/api/share/${this.sessionId || 'new'}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ htmlPath })
+            });
+
+            console.log('Fetch response status:', response.status);
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const result = await response.json();
+            console.log('Fetch result:', result);
+
+            if (result.success && result.shareUrl) {
+                this.sessionId = result.sessionId || this.sessionId;
+                this.shareUrl = result.shareUrl;
+                localStorage.setItem('sessionId', this.sessionId);
+                this.showShareLink();
+                this.showMessage('shareStatus', 'Share link generated', 'success');
+            } else {
+                throw new Error('No share URL provided by server');
+            }
+        } catch (error) {
+            console.error('Error sharing gallery:', error);
+            this.showMessage('shareStatus', `Failed to share: ${error.message}`, 'error');
+        } finally {
+            this.showStatus('shareStatus', false);
+        }
+    }
+
+    
+    showShareLink() {
+        console.log("showShareLink called with shareUrl:", this.shareUrl);
+        if (!this.shareUrl) {
+            console.error("No shareUrl available");
+            this.showMessage("shareStatus", "No share link available", "error");
+            return;
+        }
+    
+        const shareModal = document.getElementById("shareModal");
+        if (!shareModal) {
+            console.error("shareModal element not found in DOM");
+            this.showMessage("shareStatus", "Failed to display share modal", "error");
+            return;
+        }
+    
+        shareModal.innerHTML = `
+            <h3>Share Your Gallery</h3>
+            <input type="text" value="${this.shareUrl}" id="shareLinkInput" readonly>
+            <button id="copyShareLink" class="glow-btn">Copy Link</button>
+            <button id="closeShareModal" class="glow-btn">Close</button>
+        `;
+        shareModal.style.display = 'block';
+    
+        console.log("Modal displayed:", shareModal);
+    
+        const copyButton = document.getElementById("copyShareLink");
+        const closeButton = document.getElementById("closeShareModal");
+    
+        if (copyButton) {
+            copyButton.addEventListener("click", async () => {
+                const input = document.getElementById("shareLinkInput");
+                if (input) {
+                    try {
+                        await navigator.clipboard.writeText(input.value);
+                        this.showMessage("shareStatus", "Link copied to clipboard", "success");
+                    } catch (err) {
+                        console.warn("Clipboard API failed, using fallback:", err);
+                        input.select();
+                        document.execCommand("copy");
+                        this.showMessage("shareStatus", "Link copied to clipboard", "success");
+                    }
+                } else {
+                    console.error("shareLinkInput not found");
+                    this.showMessage("shareStatus", "Failed to copy link", "error");
+                }
+            });
+        } else {
+            console.error("copyShareLink button not found");
+        }
+    
+        if (closeButton) {
+            closeButton.addEventListener("click", () => {
+                shareModal.style.display = 'none';
+                shareModal.innerHTML = ''; // Clear to prevent duplicate listeners
+                console.log("Share modal closed");
+            });
+        } else {
+            console.error("closeShareModal button not found");
+        }
+    }
+
+
+
+    updateTutorialOnAction(event, tutorial) {
+        if (this.isMobile) return; // Skip tutorial progression on mobile
+
+        if (tutorial.dataset.step === "start" && event.type === "click") {
+            tutorial.innerHTML = `
+                Great! Now move around:<br>
+                • <strong>W</strong>: Forward<br>
+                • <strong>A</strong>: Left<br>
+                • <strong>S</strong>: Back<br>
+                • <strong>D</strong>: Right<br>
+                Try it!
+            `;
+            tutorial.dataset.step = "move";
+        } else if (tutorial.dataset.step === "move" && ["w", "a", "s", "d"].includes(event.key?.toLowerCase())) {
+            tutorial.innerHTML = `
+                Nice! Turn and look:<br>
+                • <strong>Q</strong>: Turn left<br>
+                • <strong>E</strong>: Turn right<br>
+                • Move mouse to look up/down<br>
+                Give it a go!
+            `;
+            tutorial.dataset.step = "rotate";
+        } else if (tutorial.dataset.step === "rotate" && ["q", "e"].includes(event.key?.toLowerCase())) {
+            tutorial.innerHTML = `
+                Good job! More tips:<br>
+                • Double-click art to zoom in<br>
+                • Press <strong>Esc</strong> to exit zoom<br>
+                • Click the avatar for help<br>
+                Enjoy exploring!
+            `;
+            tutorial.dataset.step = "zoom";
+            // Fade out after a delay
+            setTimeout(() => {
+                tutorial.style.transition = "opacity 1s";
+                tutorial.style.opacity = "0";
+                setTimeout(() => tutorial.remove(), 1000);
+            }, 6000); // Show for 5 seconds before fading
+        }
     }
 
     showImagePreviewsAndMetadataPrompt(event) {
@@ -848,7 +1023,7 @@ class ThreeJSApp {
                 <h4>${file.name}</h4>
                 <input type="text" id="title-${index}" placeholder="Image Title" value="${file.name.split('.')[0]}">
                 <input type="text" id="description-${index}" placeholder="Description">
-                <input type="text" id="artist-${index}" placeholder="Artist">
+                <input type="text" id="artist-${index}" placeholder="Url">
             `;
             inputsContainer.appendChild(div);
         });
@@ -1004,29 +1179,59 @@ class ThreeJSApp {
                 const data = await response.json();
                 console.log("📸 Fetched data for session", sessionId, ":", data);
     
-                if (!data.screenshots?.length) {
-                    console.log("No screenshots found, using fallback");
+                // Validate and sanitize screenshots
+                if (!Array.isArray(data.screenshots) || data.screenshots.length === 0) {
+                    console.warn("No valid screenshots in response, using fallback");
                     this.imagesToLoad = [
                         "https://via.placeholder.com/350x250",
                         "https://via.placeholder.com/350x250"
                     ];
-                    this.metadata = [];
+                    this.metadata = [
+                        { filename: "placeholder1.jpg", title: "Untitled", description: "", artist: "Unknown" },
+                        { filename: "placeholder2.jpg", title: "Untitled", description: "", artist: "Unknown" }
+                    ];
                 } else {
-                    this.imagesToLoad = data.screenshots;
-                    this.metadata = data.metadata || [];
-                    if (!this.metadata.length && data.screenshots.length) {
-                        // Fallback metadata if server doesn't provide it
-                        this.metadata = data.screenshots.map(filename => ({
+                    this.imagesToLoad = data.screenshots
+                        .filter(s => s && typeof s === 'string')
+                        .map(s => s.trim());
+                    // Handle metadata as object or array
+                    this.metadata = [];
+                    if (data.metadata && typeof data.metadata === 'object') {
+                        if (Array.isArray(data.metadata.metadata)) {
+                            this.metadata = data.metadata.metadata.map(m => ({
+                                filename: m.filename,
+                                title: m.title || 'Untitled',
+                                description: m.description || '',
+                                artist: m.artist || 'Unknown'
+                            }));
+                        } else if (Array.isArray(data.metadata)) {
+                            this.metadata = data.metadata.map(m => ({
+                                filename: m.filename,
+                                title: m.title || 'Untitled',
+                                description: m.description || '',
+                                artist: m.artist || 'Unknown'
+                            }));
+                        }
+                    }
+                    // Fallback if no metadata
+                    if (!this.metadata.length && this.imagesToLoad.length) {
+                        this.metadata = this.imagesToLoad.map(filename => ({
                             filename: filename.split('/').pop(),
                             title: 'Untitled',
                             description: '',
                             artist: 'Unknown'
                         }));
-                        console.log("Generated fallback metadata:", this.metadata);
-                    } else {
-                        console.log("Using server-provided metadata:", this.metadata);
                     }
                 }
+    
+                console.log("Sanitized imagesToLoad:", this.imagesToLoad);
+                console.log("Sanitized metadata:", this.metadata);
+    
+                if (!this.imagesToLoad.length) {
+                    console.error("No valid images to load after sanitization");
+                    return;
+                }
+    
                 await this.displayImagesInGallery();
                 return;
             } catch (error) {
@@ -1038,7 +1243,12 @@ class ThreeJSApp {
                         "https://via.placeholder.com/350x250",
                         "https://via.placeholder.com/350x250"
                     ];
-                    this.metadata = [];
+                    this.metadata = [
+                        { filename: "placeholder1.jpg", title: "Untitled", description: "", artist: "Unknown" },
+                        { filename: "placeholder2.jpg", title: "Untitled", description: "", artist: "Unknown" }
+                    ];
+                    console.log("Fallback imagesToLoad:", this.imagesToLoad);
+                    console.log("Fallback metadata:", this.metadata);
                     await this.displayImagesInGallery();
                 } else {
                     await new Promise(resolve => setTimeout(resolve, 500 * attempt));
@@ -1048,32 +1258,37 @@ class ThreeJSApp {
     }
 
     async displayImagesInGallery() {
-        if (!this.imagesToLoad) return;
+        if (!this.imagesToLoad || !Array.isArray(this.imagesToLoad) || this.imagesToLoad.length === 0) {
+            console.error("imagesToLoad is invalid or empty:", this.imagesToLoad);
+            return;
+        }
     
         this.clearScene();
         const totalImages = this.imagesToLoad.length;
         let imageIndex = 0;
         const seenHashes = new Set();
-
+    
         const frameMaterial = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.5, metalness: 0.8 });
         const fallbackMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000, roughness: 0.5, metalness: 0 });
-
+    
         const room = this.rooms[0];
         const wallLength = this.config.roomSize;
         const wallCount = 4;
         this.config.maxImagesPerWall = Math.ceil(totalImages / wallCount);
         const spacing = wallLength / (this.config.maxImagesPerWall + 1);
-
+    
         const wallConfigs = [
             { basePos: new THREE.Vector3(0, this.config.wallHeight / 2, -wallLength / 2 + this.config.wallOffset), rot: 0, dir: 'x' },
             { basePos: new THREE.Vector3(-wallLength / 2 + this.config.wallOffset, this.config.wallHeight / 2, 0), rot: Math.PI / 2, dir: 'z' },
             { basePos: new THREE.Vector3(wallLength / 2 - this.config.wallOffset, this.config.wallHeight / 2, 0), rot: -Math.PI / 2, dir: 'z' },
             { basePos: new THREE.Vector3(0, this.config.wallHeight / 2, wallLength / 2 - this.config.wallOffset), rot: Math.PI, dir: 'x' }
         ];
-
+    
+        console.log("Starting displayImagesInGallery with imagesToLoad:", this.imagesToLoad);
+    
         for (let wall of wallConfigs) {
             if (imageIndex >= totalImages) break;
-
+    
             const wallPositions = [];
             for (let i = 0; i < this.config.maxImagesPerWall && imageIndex < totalImages; i++) {
                 const offset = -wallLength / 2 + (i + 0.5) * spacing;
@@ -1082,27 +1297,35 @@ class ThreeJSApp {
                 else pos.z += offset;
                 wallPositions.push({ pos, rot: wall.rot });
             }
-
+    
             for (let { pos, rot } of wallPositions) {
                 const filename = this.imagesToLoad[imageIndex];
-                const meta = this.metadata.find(m => m.filename === filename.split('/').pop()) || {
+                if (!filename || typeof filename !== 'string') {
+                    console.error(`Invalid filename at index ${imageIndex}:`, filename);
+                    imageIndex++;
+                    continue;
+                }
+    
+                const fileBaseName = filename.split('/').pop();
+                const meta = this.metadata.find(m => m.filename === fileBaseName) || {
+                    filename: fileBaseName,
                     title: 'Untitled',
                     description: '',
                     artist: 'Unknown'
                 };
-                console.log(`Assigning metadata to ${filename}:`, meta);
-
+                console.log(`Processing image ${imageIndex}/${totalImages}: ${filename}, Metadata:`, meta);
+    
                 try {
                     const texture = await this.loadTexture(filename);
                     const hash = await this.computeImageHash(texture);
-
+    
                     if (seenHashes.has(hash)) {
                         console.warn(`Duplicate image content detected for ${filename} with hash ${hash}, skipping`);
                         imageIndex++;
                         continue;
                     }
                     seenHashes.add(hash);
-
+    
                     let material;
                     if (texture.image) {
                         material = new THREE.ShaderMaterial({
@@ -1138,10 +1361,10 @@ class ThreeJSApp {
                     } else {
                         material = fallbackMaterial;
                     }
-
+    
                     const aspectRatio = texture.image ? texture.image.width / texture.image.height : 1;
                     const adjustedWidth = Math.min(this.config.displayHeight * aspectRatio, this.config.displayWidth);
-
+    
                     const geometry = new THREE.BoxGeometry(adjustedWidth, this.config.displayHeight, this.config.displayDepth);
                     const mesh = new THREE.Mesh(geometry, material);
                     mesh.position.copy(pos).add(room.position);
@@ -1382,9 +1605,10 @@ class ThreeJSApp {
                 metadataDiv.style.cssText = 'color: white; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; margin-top: 10px;';
                 sliderContent.appendChild(metadataDiv);
             }
+            console.log("Displaying metadata for image", currentImage.src, ":", currentImage.metadata);
             metadataDiv.innerHTML = `
                 <h3>${currentImage.metadata.title || 'Untitled'}</h3>
-                <p><strong>Artist:</strong> ${currentImage.metadata.artist || 'Unknown'}</p>
+                <p><strong>Url:</strong> ${currentImage.metadata.artist ? `<a href="${currentImage.metadata.artist}" target="_blank">${currentImage.metadata.artist}</a>` : 'None'}</p>
                 <p><strong>Description:</strong> ${currentImage.metadata.description || ''}</p>
             `;
         } else {
@@ -1556,70 +1780,117 @@ class ThreeJSApp {
             this.camera.updateProjectionMatrix();
         }
     }
-
     async handleScreenshotSubmit(event) {
         event.preventDefault();
-        const url = document.getElementById("url")?.value;
-        if (!url) return;
-
+        const url = document.getElementById("url").value;
+        if (!url) {
+            this.showMessage("screenshotStatus", "Please enter a valid URL", "error");
+            return;
+        }
+        
+        this.showStatus("screenshotStatus", true);
+        
         try {
             const response = await fetch("/api/capture", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url })
             });
+            
             const result = await response.json();
             if (result.sessionId) {
                 this.sessionId = result.sessionId;
                 localStorage.setItem('sessionId', this.sessionId);
-                await this.loadImages(this.sessionId);
+                this.showMessage("screenshotStatus", `Screenshots captured for ${url}`, "success");
+                this.loadImages(this.sessionId);
+            } else {
+                this.showMessage("screenshotStatus", "Failed to capture screenshot", "error");
             }
         } catch (error) {
-            console.error("Error capturing screenshot:", error);
+            console.error("Error:", error);
+            this.showMessage("screenshotStatus", `Failed to capture screenshot: ${error.message}`, "error");
+        } finally {
+            this.showStatus("screenshotStatus", false);
         }
-    }
+        }
 
-    async handleUploadSubmit(event) {
-        event.preventDefault();
-        if (!this.pendingFiles.length || !this.metadata.length) {
-            console.log("No files or metadata to upload");
-            return;
-        }
+
     
-        const formData = new FormData();
-        this.pendingFiles.forEach((file, index) => {
-            formData.append("images", file);
-            formData.append("title", this.metadata[index].title);
-            formData.append("description", this.metadata[index].description);
-            formData.append("artist", this.metadata[index].artist);
-        });
-    
-        try {
-            const response = await fetch(`/api/upload${this.sessionId ? `/${this.sessionId}` : ''}`, {
-                method: "POST",
-                body: formData
+        async handleUploadSubmit(event) {
+            event.preventDefault();
+            if (!this.pendingFiles.length || !this.metadata.length) {
+                console.log("No files or metadata to upload");
+                return;
+            }
+        
+            const formData = new FormData();
+            this.pendingFiles.forEach((file, index) => {
+                formData.append("images", file);
+                formData.append("title", this.metadata[index].title);
+                formData.append("description", this.metadata[index].description);
+                formData.append("artist", this.metadata[index].artist);
             });
-            const result = await response.json();
-            if (result.success) {
-                this.sessionId = result.sessionId;
-                localStorage.setItem('sessionId', this.sessionId);
-                this.metadata = this.pendingFiles.map((file, index) => ({
-                    filename: file.name,
-                    title: this.metadata[index].title,
-                    description: this.metadata[index].description,
-                    artist: this.metadata[index].artist
-                }));
-                await new Promise(resolve => setTimeout(resolve, 100));
-                await this.loadImages(this.sessionId);
-                this.pendingFiles = [];
-                document.getElementById('images').value = '';
-                this.previewContainer.innerHTML = '';
+        
+            try {
+                const response = await fetch(`/api/upload${this.sessionId ? `/${this.sessionId}` : ''}`, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.sessionId = result.sessionId;
+                    localStorage.setItem('sessionId', this.sessionId);
+                    // Update this.metadata with backend filenames
+                    this.metadata = result.filePaths.map((filePath, index) => ({
+                        filename: filePath.split('/').pop(),
+                        title: this.metadata[index].title,
+                        description: this.metadata[index].description,
+                        artist: this.metadata[index].artist
+                    }));
+                    console.log("Updated metadata with backend filenames:", this.metadata);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await this.loadImages(this.sessionId);
+                    this.pendingFiles = [];
+                    document.getElementById('images').value = '';
+                    this.previewContainer.innerHTML = '';
+                } else {
+                    throw new Error("Upload failed");
+                }
+            } catch (error) {
+                console.error("Error uploading files:", error);
+                this.showMessage("shareStatus", "Failed to upload images", "error");
             }
-        } catch (error) {
-            console.error("Error uploading files:", error);
+        }
+
+    showStatus(statusId, show) {
+        const statusElement = document.getElementById(statusId);
+        if (statusElement) {
+            statusElement.classList.toggle("hidden", !show);
+            if (show) {
+                statusElement.classList.remove("success", "error");
+                statusElement.classList.add("loading");
+                statusElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            } else {
+                statusElement.classList.remove("loading");
+            }
         }
     }
 
+    showMessage(statusId, message, type) {
+        const statusElement = document.getElementById(statusId);
+        if (statusElement) {
+            statusElement.classList.remove("hidden", "loading");
+            statusElement.classList.add(type === "success" ? "success" : "error");
+            statusElement.innerHTML = type === "success" ? '<i class="fas fa-check"></i>' : '<i class="fas fa-exclamation-triangle"></i>';
+            statusElement.setAttribute("data-tooltip", message);
+            
+            setTimeout(() => {
+                statusElement.classList.add("hidden");
+                statusElement.removeAttribute("data-tooltip");
+                statusElement.classList.remove("success", "error");
+            }, 3000);
+        }
+        }
 
     handleResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -1656,6 +1927,8 @@ class ThreeJSApp {
         });
     }
 }
+
+
 
 const app = new ThreeJSApp();
 app.init();

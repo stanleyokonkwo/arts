@@ -641,7 +641,7 @@ if (!url) {
     this.showMessage("screenshotStatus", "Please enter a valid URL", "error");
     return;
 }
-
+ 
 this.showStatus("screenshotStatus", true);
 
 try {

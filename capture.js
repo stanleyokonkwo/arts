@@ -18,7 +18,7 @@ class ScreenshotServer {
         this.PORT = 3000;
         this.outputDir = path.join(this.__dirname, 'screenshots');
         this.upload = this.configureMulter();
-        this.cleanupInterval = 80 * 80 * 1000; // Cleanup every hour (in milliseconds)
+        this.cleanupInterval = 80 * 80 * 1000; 
     }
 
     async init() {
@@ -51,15 +51,21 @@ class ScreenshotServer {
         try {
             const dirs = await fs.readdir(this.outputDir, { withFileTypes: true });
             const now = Date.now();
-            const maxAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
+            const maxAge = 24 * 60 * 60 * 1000; // 24 hours
+    
             for (const dir of dirs) {
-                if (!dir.isDirectory()) continue; // Skip non-directories
-
+                if (!dir.isDirectory()) continue;
+    
                 const dirPath = path.join(this.outputDir, dir.name);
                 const stats = await fs.stat(dirPath);
-
-                // Check if the directory is older than maxAge based on modification time
+    
+                // Skip cleanup if session is explicitly marked as shared (e.g., via metadata)
+                const metadataPath = path.join(dirPath, 'metadata.json');
+                if (fs.existsSync(metadataPath)) {
+                    const metadata = await fs.readJson(metadataPath);
+                    if (metadata.shared) continue; // Skip if marked as shared
+                }
+    
                 if (now - stats.mtimeMs > maxAge) {
                     await fs.remove(dirPath);
                     console.log(`🗑️ Removed old session directory: ${dir.name}`);
@@ -83,17 +89,90 @@ class ScreenshotServer {
         return multer({ storage: multer.memoryStorage() });
     }
 
+
     setupRoutes() {
+        // Serve static files first
+        this.app.use(express.static(path.join(this.__dirname, 'public')));
+    
+        // API routes
         this.app.get('/api/screenshots/:sessionId', async (req, res) => this.handleGetScreenshots(req, res));
         this.app.post('/api/capture', async (req, res) => this.handleCapture(req, res));
         this.app.post('/api/upload/:sessionId?', this.upload.array('images'), (req, res) => this.handleUpload(req, res));
-
+        this.app.get('/api/share/:sessionId', async (req, res) => this.handleShareSession(req, res));
+        this.app.post('/api/share/:sessionId?', async (req, res) => this.handleShareSession(req, res));
+    
+        // Serve dynamic HTML for /gallery/:sessionId
+        this.app.get('/gallery/:sessionId', (req, res) => {
+            const sessionId = req.params.sessionId;
+            const sessionDir = path.join(this.outputDir, sessionId);
+            let htmlPath = path.join(this.__dirname, 'public', 'modern.html'); // Default fallback
+        
+            // Validate sessionId format (UUID-like)
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(sessionId)) {
+                console.warn(`Invalid sessionId format: ${sessionId}, expected UUID`);
+                return res.status(400).send('Invalid session ID');
+            }
+        
+            // Check metadata.json for htmlPath
+            const metadataPath = path.join(sessionDir, 'metadata.json');
+            console.log(`Checking metadata at: ${metadataPath}`);
+            if (fs.existsSync(metadataPath)) {
+                try {
+                    const metadata = fs.readJsonSync(metadataPath);
+                    console.log(`Metadata content: ${JSON.stringify(metadata)}`);
+                    if (Array.isArray(metadata)) {
+                        console.warn(`Metadata is an array, expected an object for session: ${sessionId}, falling back to modern.html`);
+                    } else if (metadata.htmlPath) {
+                        // Normalize htmlPath and resolve relative to public/
+                        const cleanHtmlPath = metadata.htmlPath.replace(/^\/+/, '').replace(/\\/g, '/');
+                        const candidatePath = path.join(this.__dirname, 'public', cleanHtmlPath);
+                        console.log(`Trying candidatePath: ${candidatePath}`);
+                        if (fs.existsSync(candidatePath) && candidatePath.endsWith('.html')) {
+                            htmlPath = candidatePath;
+                            console.log(`Valid htmlPath found: ${htmlPath}`);
+                        } else {
+                            console.warn(`Invalid or missing HTML file: ${candidatePath}, falling back to modern.html`);
+                        }
+                    } else {
+                        console.warn(`No htmlPath in metadata for session: ${sessionId}, falling back to modern.html`);
+                    }
+                } catch (error) {
+                    console.error(`Error reading metadata at ${metadataPath}:`, error);
+                }
+            } else {
+                console.warn(`No metadata found at ${metadataPath} for session: ${sessionId}, falling back to modern.html`);
+            }
+        
+            console.log(`Final htmlPath to serve: ${htmlPath}`);
+            fs.access(htmlPath, fs.constants.F_OK, (err) => {
+                if (err) {
+                    console.error(`File not accessible: ${htmlPath}`, err);
+                    return res.status(404).send('Page not found');
+                }
+        
+                fs.readFile(htmlPath, 'utf8', (err, data) => {
+                    if (err) {
+                        console.error(`Error reading file: ${htmlPath}`, err);
+                        return res.status(500).send('Server error');
+                    }
+        
+                    // Inject sessionId script
+                    const script = `<script>localStorage.setItem('sessionId', '${sessionId}');</script>`;
+                    const modifiedHtml = data.includes('</body>')
+                        ? data.replace('</body>', `${script}</body>`)
+                        : `${data}${script}`;
+        
+                    res.set('Content-Type', 'text/html');
+                    res.send(modifiedHtml);
+                    console.log(`Serving gallery for sessionId: ${sessionId}, htmlPath: ${htmlPath}`);
+                });
+            });
+        });
+        // Fallback route for other pages
         this.app.get('/:page?', (req, res) => {
-
-            
             const page = req.params.page || 'index';
             const filePath = path.join(this.__dirname, 'public', `${page}.html`);
-
             fs.access(filePath, fs.constants.F_OK, (err) => {
                 if (err) {
                     return res.status(404).send('Page not found');
@@ -101,6 +180,52 @@ class ScreenshotServer {
                 res.sendFile(filePath);
             });
         });
+    }
+
+    async handleShareSession(req, res) {
+        let sessionId = req.params.sessionId === 'new' ? uuidv4() : req.params.sessionId || uuidv4();
+        const sessionDir = path.join(this.outputDir, sessionId);
+        console.log(`Generating share link for sessionId: ${sessionId}`); // Debug
+    
+        try {
+            // Validate session for GET or existing sessionId
+            if (req.method === 'GET' || (req.method === 'POST' && req.params.sessionId !== 'new')) {
+                if (!fs.existsSync(sessionDir)) {
+                    return res.status(404).json({ error: 'Session not found' });
+                }
+            }
+    
+            // Handle htmlPath from POST
+            if (req.method === 'POST' && req.body.htmlPath) {
+                let htmlPath = req.body.htmlPath;
+                if (!htmlPath.endsWith('.html')) {
+                    htmlPath = htmlPath.replace(/\/$/, '') + '.html';
+                }
+                const metadataPath = path.join(sessionDir, 'metadata.json');
+                let metadataObj = { metadata: [], shared: true, htmlPath };
+                if (fs.existsSync(metadataPath)) {
+                    try {
+                        const existingData = await fs.readJson(metadataPath);
+                        if (Array.isArray(existingData)) {
+                            metadataObj.metadata = existingData;
+                        } else {
+                            metadataObj = { ...existingData, shared: true, htmlPath };
+                        }
+                    } catch (error) {
+                        console.error(`Error reading metadata at ${metadataPath}:`, error);
+                    }
+                }
+                await fs.ensureDir(sessionDir);
+                await fs.writeJson(metadataPath, metadataObj, { spaces: 2 });
+                console.log(`📝 Updated metadata with htmlPath: ${htmlPath}`);
+            }
+    
+            const shareUrl = `${req.protocol}://${req.get('host')}/gallery/${sessionId}`;
+            res.json({ success: true, sessionId, shareUrl });
+        } catch (error) {
+            console.error('❌ Error generating share link:', error);
+            res.status(500).json({ error: 'Failed to generate share link', details: error.message });
+        }
     }
 
     startServer() {
@@ -157,6 +282,7 @@ class ScreenshotServer {
     }
     async handleUpload(req, res) {
         const sessionId = req.params.sessionId || uuidv4();
+        console.log(`Uploading files for sessionId: ${sessionId}`); // Debug
         const sessionDir = path.join(this.outputDir, sessionId);
     
         if (!req.files || req.files.length === 0) {
@@ -181,7 +307,6 @@ class ScreenshotServer {
                 console.log(`✅ Saved: ${filePath}`);
                 filePaths.push(`/screenshots/${sessionId}/${filename}`);
     
-                // Make metadata optional with defaults if not provided
                 const title = Array.isArray(req.body.title) && req.body.title[i] ? req.body.title[i] : 'Untitled';
                 const description = Array.isArray(req.body.description) && req.body.description[i] ? req.body.description[i] : '';
                 const artist = Array.isArray(req.body.artist) && req.body.artist[i] ? req.body.artist[i] : 'Unknown';
@@ -189,7 +314,12 @@ class ScreenshotServer {
             }
     
             const metadataPath = path.join(sessionDir, 'metadata.json');
-            await fs.writeJson(metadataPath, metadata, { spaces: 2 });
+            const metadataObj = {
+                metadata,
+                shared: false,
+                htmlPath: null
+            };
+            await fs.writeJson(metadataPath, metadataObj, { spaces: 2 });
             console.log(`📝 Metadata saved: ${metadataPath}`);
     
             res.json({

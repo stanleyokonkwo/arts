@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern Virtual Art Gallery with Animation Tools</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-    <link rel="stylesheet" href="virtual.css" />
+    <link rel="stylesheet" href="/virtual.css" /> <!-- Changed to absolute path -->
     <script type="importmap">
         {
             "imports": {
@@ -17,8 +17,7 @@
         }
     </script>
     <style>
-        /* Add basic modal styles; refine in index.css as needed */
-        #metadataModal {
+        #metadataModal, #shareModal {
             position: fixed;
             top: 50%;
             left: 50%;
@@ -32,13 +31,13 @@
             max-height: 80vh;
             overflow-y: auto;
         }
-        #metadataModal input {
+        #metadataModal input, #shareModal input {
             display: block;
             margin: 10px 0;
             width: 100%;
             padding: 5px;
         }
-        #metadataModal button {
+        #metadataModal button, #shareModal button {
             margin: 10px 5px 0 0;
             padding: 5px 10px;
             background: #1e90ff;
@@ -47,14 +46,17 @@
             border-radius: 5px;
             cursor: pointer;
         }
-        #metadataModal button.cancel {
+        #metadataModal button.cancel, #shareModal button:nth-child(3) {
             background: #ff4444;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <div id="ui-overlay">
-        <!-- Existing UI elements unchanged -->
         <button id="toggleControlsBtn" class="glow-btn toggle-controls-btn">Hide Controls</button>
         <div class="control-panel top-panel">
             <h1 class="title">3D Virtual Art Gallery</h1>
@@ -74,7 +76,11 @@
                     <button id="animateObjectsBtn" class="glow-btn">Animate Objects</button>
                 </div>
                 <div class="action-group">
-                   <a href="."><button id="" class="glow-btn">Home</button></a> 
+                    <button id="shareBtn" class="glow-btn">Share Gallery</button>
+                    <span id="shareStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                </div>
+                <div class="action-group">
+                    <a href="/"><button class="glow-btn">Home</button></a> <!-- Changed to absolute path -->
                 </div>
             </div>
         </div>
@@ -84,7 +90,6 @@
                 <input type="file" id="images" multiple accept="image/*">
                 <div id="previewContainer" class="preview-container"></div>
                 <div class="action-group">
-                    <button type="submit" class="glow-btn submit-btn">Upload</button>
                     <span id="uploadStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
             </form>
@@ -123,13 +128,14 @@
             </div>
         </div>
     </div>
-    <!-- Metadata Modal -->
     <div id="metadataModal">
         <h3>Enter Image Metadata</h3>
         <div id="metadataInputs"></div>
         <button id="submitMetadata">Submit</button>
         <button id="cancelMetadata" class="cancel">Cancel</button>
     </div>
-    <script type="module" src="modern2_Secured.js"></script>
+    <div id="shareModal"></div> <!-- Added here -->
+    
+    <script type="module" src="/modern2.js"></script> <!-- Changed to absolute path -->
 </body>
 </html>
