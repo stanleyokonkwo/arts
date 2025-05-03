@@ -117,9 +117,9 @@ class ThreeJSApp {
         this.currentRoom = 0;
         this.isFocused = false;
         this.isLocked = false;
-        this.isSliderActive = false; // Added for slider
-        this.sliderImages = []; // Added for slider
-        this.currentSliderIndex = 0; // Added for slider
+        this.isSliderActive = false; 
+        this.sliderImages = []; 
+        this.currentSliderIndex = 0; 
 
         this.previousCameraState = {
             position: this.camera.position.clone(),
@@ -131,14 +131,14 @@ class ThreeJSApp {
         this.clickDelay = 300;
         this.keys = { w: false, a: false, s: false, d: false, q: false, e: false };
         this.moveSpeed = 0.1;
-        this.rotationSpeed = 0.02; // Define rotation speed (adjustable)
+        this.rotationSpeed = 0.02; 
        
         
         this.time = 0;
         this.lightWall = null;
         this.interactionCooldown = 0;
 
-        // Animation properties
+      
         this.isRecording = false;
         this.recordedFrames = [];
         this.mediaRecorder = null;
@@ -186,6 +186,7 @@ class ThreeJSApp {
         `;
         document.body.appendChild(preloader);
     }
+
     hidePreloader() {
         const preloader = document.getElementById('preloader');
         if (preloader) {
@@ -194,7 +195,7 @@ class ThreeJSApp {
             setTimeout(() => {
                 preloader.remove();
                 this.isLoading = false;
-            }, 500); // Match transition duration
+            }, 500);
         }
     }
 
@@ -277,7 +278,7 @@ class ThreeJSApp {
         floor.receiveShadow = true;
         room.add(floor);
     
-        // LED strips on the floor
+        
         const ledStripGeometry = new THREE.BoxGeometry(this.config.roomSize, 0.02, 0.1);
         const ledSpacing = this.config.roomSize / 5;
         for (let i = -this.config.roomSize / 2 + ledSpacing; i < this.config.roomSize / 2; i += ledSpacing) {
@@ -611,38 +612,113 @@ async init() {
     }
 
 
-
-    startRecording() {
+    async startRecording() {
         if (this.isRecording) return;
-        
-        this.isRecording = true;
-        this.recordedFrames = [];
-        const stream = this.renderer.domElement.captureStream(30);
-        this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-        
-        this.mediaRecorder.ondataavailable = (event) => {
-            if (event.data.size > 0) {
-                this.recordedFrames.push(event.data);
-            }
-        };
-        
-        this.mediaRecorder.onstop = () => {
-            this.saveRecording();
-        };
-        
-        this.mediaRecorder.start();
-        document.getElementById('recordStatus').classList.remove('hidden');
-        console.log("🎥 Recording started");
+    
+        try {
+            // Step 1: Request screen capture
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: { displaySurface: 'monitor' }, // Prefer entire screen
+                audio: false
+            });
+    
+            // Step 2: Show a confirmation dialog to enter full-screen mode
+            const enterFullscreen = new Promise((resolve, reject) => {
+                const dialog = document.createElement('div');
+                dialog.id = 'fullscreenDialog';
+                dialog.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(0, 0, 0, 0.8);
+                    color: white;
+                    padding: 20px;
+                    border-radius: 5px;
+                    z-index: 1001;
+                    text-align: center;
+                `;
+                dialog.innerHTML = `
+                    <p>Click to enter full-screen mode for recording.</p>
+                    <button id="confirmFullscreen" class="glow-btn">Enter Full-Screen</button>
+                    <button id="skipFullscreen" class="glow-btn">Skip</button>
+                `;
+                document.body.appendChild(dialog);
+    
+                const confirmBtn = document.getElementById('confirmFullscreen');
+                const skipBtn = document.getElementById('skipFullscreen');
+    
+                confirmBtn.addEventListener('click', async () => {
+                    try {
+                        await document.documentElement.requestFullscreen();
+                        console.log("🖥️ Entered full-screen mode");
+                        document.body.removeChild(dialog);
+                        resolve();
+                    } catch (error) {
+                        console.warn("Failed to enter full-screen mode:", error);
+                        this.showMessage('recordStatus', 'Full-screen mode not supported; recording may include browser UI', 'warning');
+                        document.body.removeChild(dialog);
+                        resolve(); // Proceed with recording
+                    }
+                });
+    
+                skipBtn.addEventListener('click', () => {
+                    this.showMessage('recordStatus', 'Recording without full-screen; browser UI may be included', 'warning');
+                    document.body.removeChild(dialog);
+                    resolve();
+                });
+            });
+    
+            // Wait for the user to confirm or skip full-screen
+            await enterFullscreen;
+    
+            // Step 3: Set up recording
+            this.isRecording = true;
+            this.recordedFrames = [];
+            this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.recordedFrames.push(event.data);
+                }
+            };
+    
+            this.mediaRecorder.onstop = () => {
+                this.saveRecording();
+                stream.getTracks().forEach(track => track.stop());
+                // Exit full-screen mode if active
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().then(() => {
+                        console.log("🖥️ Exited full-screen mode");
+                    }).catch(err => {
+                        console.warn("Failed to exit full-screen mode:", err);
+                    });
+                }
+            };
+    
+            this.mediaRecorder.start();
+            document.getElementById('recordStatus').classList.remove('hidden');
+            this.showMessage('recordStatus', 'Recording started', 'success');
+            console.log("🎥 Screen recording started");
+        } catch (error) {
+            console.error("Error starting recording:", error);
+            this.isRecording = false;
+            document.getElementById('recordStatus').classList.add('hidden');
+            this.showMessage('recordStatus', 'Failed to start recording', 'error');
+        }
     }
-
+    
     stopRecording() {
         if (!this.isRecording || !this.mediaRecorder) return;
-        
+    
         this.isRecording = false;
         this.mediaRecorder.stop();
         document.getElementById('recordStatus').classList.add('hidden');
+        document.getElementById('recordBtn').textContent = 'Record';
+        this.showMessage('recordStatus', 'Recording stopped', 'success');
         console.log("🎥 Recording stopped");
     }
+
 
     saveRecording() {
         const blob = new Blob(this.recordedFrames, { type: 'video/webm' });
@@ -709,54 +785,125 @@ async init() {
     }
 
     setupEventListeners() {
+        // Create tutorial overlay
         const tutorial = document.createElement("div");
         tutorial.id = "tutorialOverlay";
-      
-        if (this.isMobile) {
-            tutorial.innerHTML = `
-                Welcome to your 3D Gallery!<br>
-                • Swipe to look around.<br>
-                • Pinch to zoom.<br>
-                • Tap artwork to focus.<br>
-                • Tap avatar for help!
-            `;
-            tutorial.style.display = "none"; 
-        } else {
-            tutorial.innerHTML = `
-                Welcome to your 3D Gallery!<br>
-                Click anywhere to start exploring!
-            `;
-            tutorial.dataset.step = "start";
-        }
+        tutorial.innerHTML = `
+            Welcome to your 3D Gallery!<br>
+            Click anywhere to start exploring!
+        `;
+        tutorial.dataset.step = "start";
+        tutorial.style.display = 'block'; // Ensure visible
         document.body.appendChild(tutorial);
-
-        this.renderer.domElement.addEventListener(this.isMobile ? "touchstart" : "click", (event) => this.onCanvasClick(event));
-        if (!this.isMobile) {
-            document.addEventListener("keydown", (event) => this.onKeyDown(event));
-            document.addEventListener("keyup", (event) => this.onKeyUp(event));
-            this.renderer.domElement.addEventListener("click", () => {
-                if (!this.isLocked && !this.isFocused && !this.isSliderActive) {
-                    this.controls.lock();
-                    if (tutorial.dataset.step === "start") {
-                        this.updateTutorialOnAction({ type: "click" }, tutorial);
-                    }
+        console.log("Tutorial overlay created, display:", tutorial.style.display);
+    
+        // Ensure canvas is focusable but not obscuring UI
+        this.renderer.domElement.setAttribute('tabindex', '0');
+        this.renderer.domElement.style.outline = 'none';
+        this.renderer.domElement.style.position = 'relative';
+        this.renderer.domElement.style.zIndex = '1'; // Lower z-index to avoid covering UI
+        console.log("Canvas z-index:", window.getComputedStyle(this.renderer.domElement).zIndex);
+    
+        // Debug UI elements
+        this.debugUI();
+    
+        // Initialize controls visibility
+        this.restoreControls();
+    
+        // Click event for canvas interactions
+        this.renderer.domElement.addEventListener("click", (event) => {
+            console.log("Canvas clicked, isLocked:", this.isLocked, "isFocused:", this.isFocused, "isSliderActive:", this.isSliderActive);
+            this.onCanvasClick(event);
+        });
+    
+        // Click event to lock pointer
+        this.renderer.domElement.addEventListener("click", () => {
+            if (!this.isLocked && !this.isFocused && !this.isSliderActive) {
+                console.log("Attempting to lock pointer");
+                this.controls.lock();
+                this.renderer.domElement.focus();
+                if (tutorial.dataset.step === "start") {
+                    this.updateTutorialOnAction({ type: "click" }, tutorial);
                 }
-            });
-            document.addEventListener("pointerlockchange", () => {
-                this.isLocked = document.pointerLockElement === this.renderer.domElement;
-                console.log("Pointer lock state changed:", this.isLocked ? "Locked" : "Unlocked");
-                if (!this.isLocked) this.isFocused = false;
-            });
-            document.addEventListener("pointerlockerror", () => {
-                console.error("Pointer Lock failed");
-            });
-            
-            document.addEventListener("click", (e) => this.updateTutorialOnAction(e, tutorial));
-            document.addEventListener("keydown", (e) => this.updateTutorialOnAction(e, tutorial));
-        } else {
-            tutorial.style.display = "none";
-        }
-
+            }
+        }, { once: false });
+    
+        // Right-click via mousedown (primary)
+        this.renderer.domElement.addEventListener('mousedown', (event) => {
+            if (event.button === 2) { // Right-click
+                event.preventDefault();
+                event.stopPropagation();
+                console.log("Canvas mousedown (right-click), isLocked:", this.isLocked, "target:", event.target.nodeName);
+                if (this.isLocked) {
+                    console.log("Calling controls.unlock() from mousedown");
+                    this.controls.unlock();
+                    document.exitPointerLock();
+                    console.log("Pointer unlock requested (mousedown)");
+                    this.restoreControls();
+                } else {
+                    console.log("Pointer not locked, no action taken (mousedown)");
+                }
+            }
+        }, { capture: true });
+    
+        // Right-click via contextmenu (fallback)
+        this.renderer.domElement.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            console.log("Canvas contextmenu, isLocked:", this.isLocked, "target:", event.target.nodeName);
+            if (this.isLocked) {
+                console.log("Calling controls.unlock() from contextmenu");
+                this.controls.unlock();
+                document.exitPointerLock();
+                console.log("Pointer unlock requested");
+                this.restoreControls();
+            } else {
+                console.log("Pointer not locked, no action taken");
+            }
+        }, { capture: true });
+    
+        // Fallback document-level contextmenu
+        document.addEventListener('contextmenu', (event) => {
+            console.log("Document contextmenu, target:", event.target.nodeName, "isCanvas:", event.target === this.renderer.domElement);
+            if (event.target === this.renderer.domElement) {
+                event.preventDefault();
+                console.log("Document contextmenu on canvas, isLocked:", this.isLocked);
+                if (this.isLocked) {
+                    console.log("Calling controls.unlock() from document");
+                    this.controls.unlock();
+                    document.exitPointerLock();
+                    console.log("Pointer unlock requested (document)");
+                    this.restoreControls();
+                }
+            }
+        }, { capture: true });
+    
+        // Pointer lock state change
+        document.addEventListener("pointerlockchange", () => {
+            const isLocked = document.pointerLockElement === this.renderer.domElement;
+            console.log("pointerlockchange fired, isLocked:", isLocked);
+            this.isLocked = isLocked;
+            if (!isLocked) {
+                this.isFocused = false;
+                console.log("Pointer unlocked, isFocused reset to false");
+                this.restoreControls();
+            }
+        });
+    
+        // Pointer lock error
+        document.addEventListener("pointerlockerror", (err) => {
+            console.error("Pointer Lock error:", err);
+        });
+    
+        // Tutorial updates
+        document.addEventListener("click", (e) => this.updateTutorialOnAction(e, tutorial));
+        document.addEventListener("keydown", (e) => this.updateTutorialOnAction(e, tutorial));
+    
+        // Keyboard events
+        document.addEventListener("keydown", (event) => this.onKeyDown(event));
+        document.addEventListener("keyup", (event) => this.onKeyUp(event));
+    
+        // Other control listeners
         const shareBtn = document.getElementById("shareBtn");
         if (shareBtn) {
             shareBtn.addEventListener("click", () => this.handleShare());
@@ -764,7 +911,7 @@ async init() {
         } else {
             console.error("❌ Share button not found in DOM");
         }
-
+    
         document.getElementById("uploadForm")?.addEventListener("submit", (e) => this.handleUploadSubmit(e));
         document.getElementById("uploadForm")?.addEventListener("change", (e) => this.showImagePreviewsAndMetadataPrompt(e));
         document.getElementById("screenshotForm")?.addEventListener("submit", (e) => this.handleScreenshotSubmit(e));
@@ -774,7 +921,7 @@ async init() {
         document.getElementById("recordBtn")?.addEventListener("click", () => {
             if (this.isRecording) {
                 this.stopRecording();
-                document.getElementById('recordBtn').textContent = 'Start Recording';
+                document.getElementById('recordBtn').textContent = 'Record';
             } else {
                 this.startRecording();
                 document.getElementById('recordBtn').textContent = 'Stop Recording';
@@ -788,25 +935,19 @@ async init() {
             this.animationSpeed = parseFloat(slider.value);
             value.textContent = this.animationSpeed.toFixed(1);
         });
-
-        if (!this.isMobile) {
-            document.getElementById("sensitivitySlider")?.addEventListener("input", () => {
-                const sensitivitySlider = document.getElementById("sensitivitySlider");
-                const sensitivityValue = document.getElementById("sensitivityValue");
-                const sensitivity = parseFloat(sensitivitySlider.value);
-                sensitivityValue.textContent = sensitivity.toFixed(3);
-                this.controls.setSensitivity(sensitivity);
-            });
-        } else {
-            const sensitivityGroup = document.querySelector(".slider-group:last-child");
-            if (sensitivityGroup) sensitivityGroup.style.display = "none";
-        }
-
-        
+    
+        document.getElementById("sensitivitySlider")?.addEventListener("input", () => {
+            const sensitivitySlider = document.getElementById("sensitivitySlider");
+            const sensitivityValue = document.getElementById("sensitivityValue");
+            const sensitivity = parseFloat(sensitivitySlider.value);
+            sensitivityValue.textContent = sensitivity.toFixed(3);
+            this.controls.setSensitivity(sensitivity);
+        });
+    
         const prevBtn = document.getElementById('prevImage');
         const nextBtn = document.getElementById('nextImage');
         const closeBtn = document.getElementById('closeSlider');
-
+    
         if (prevBtn) prevBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             console.log("Prev button clicked");
@@ -822,8 +963,7 @@ async init() {
             console.log("Close button clicked");
             this.closeSlider();
         });
-
-        
+    
         document.addEventListener('keydown', (event) => {
             if (this.isSliderActive) {
                 if (event.key === 'ArrowLeft') {
@@ -835,6 +975,78 @@ async init() {
                 }
             }
             this.onKeyDown(event);
+        });
+    }
+    
+    // Restore UI controls
+    restoreControls() {
+        console.log("Restoring controls, isLocked:", this.isLocked, "isSliderActive:", this.isSliderActive);
+        
+        // Restore control panel (if exists)
+        const controlPanel = document.getElementById('controlPanel');
+        if (controlPanel) {
+            controlPanel.style.display = 'block';
+            console.log("Control panel restored, display:", controlPanel.style.display);
+        } else {
+            console.log("Control panel not found");
+        }
+    
+        // Restore individual buttons/sliders
+        const uiElements = [
+            'shareBtn', 'zoomSlider', 'toggleControlsBtn', 'recordBtn',
+            'uploadForm', 'screenshotForm', 'downloadBtn', 'autoRotateBtn',
+            'animateObjectsBtn', 'animationSpeedSlider', 'sensitivitySlider'
+        ];
+        uiElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.style.display = 'block';
+                element.style.visibility = 'visible';
+                element.style.opacity = '1';
+                console.log(`${id} restored, display:`, element.style.display);
+            } else {
+                console.error(`❌ ${id} not found in DOM`);
+            }
+        });
+    
+        // Ensure image slider is hidden unless isSliderActive
+        const slider = document.getElementById('imageSliderContainer');
+        if (slider) {
+            slider.style.display = this.isSliderActive ? 'block' : 'none';
+            console.log("Image slider display:", slider.style.display);
+        } else {
+            console.log("Image slider not found");
+        }
+    
+        // Restore tutorial overlay if not completed
+        const tutorial = document.getElementById('tutorialOverlay');
+        if (tutorial && tutorial.dataset.step !== 'zoom') {
+            tutorial.style.display = 'block';
+            console.log("Tutorial overlay restored, display:", tutorial.style.display);
+        } else if (!tutorial) {
+            console.log("Tutorial overlay not found");
+        }
+    }
+    
+    // Debug UI elements
+    debugUI() {
+        console.log("Debugging UI elements:");
+        const uiElements = [
+            'controlPanel', 'shareBtn', 'zoomSlider', 'toggleControlsBtn', 'recordBtn',
+            'uploadForm', 'screenshotForm', 'downloadBtn', 'autoRotateBtn',
+            'animateObjectsBtn', 'animationSpeedSlider', 'sensitivitySlider',
+            'imageSliderContainer', 'prevImage', 'nextImage', 'closeSlider',
+            'tutorialOverlay'
+        ];
+        uiElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                console.log(`${id} found, display:`, window.getComputedStyle(element).display, 
+                            "visibility:", window.getComputedStyle(element).visibility,
+                            "z-index:", window.getComputedStyle(element).zIndex);
+            } else {
+                console.error(`❌ ${id} not found in DOM`);
+            }
         });
     }
 
@@ -974,7 +1186,7 @@ async init() {
             tutorial.innerHTML = `
                 Good job! More tips:<br>
                 • Double-click art to zoom in<br>
-                • Press <strong>Esc</strong> to exit zoom<br>
+                • Press <strong>Esc or Right Click</strong> to exit Focus<br>
                 • Click the avatar for help<br>
                 Enjoy exploring!
             `;
@@ -1062,7 +1274,7 @@ async init() {
             panel.classList.toggle("hidden-panel", !this.controlsVisible);
         });
 
-        toggleButton.textContent = this.controlsVisible ? "Hide Controls" : "Show Controls";
+        toggleButton.textContent = this.controlsVisible ? "Hide" : "Show";
         toggleButton.querySelector("i") && (toggleButton.querySelector("i").className = this.controlsVisible ? "fas fa-eye" : "fas fa-eye-slash");
         console.log(this.controlsVisible ? "🖥️ Controls visible" : "🖥️ Controls hidden");
     }
@@ -1527,6 +1739,7 @@ async init() {
     }
 
     openSlider(selectedMesh) {
+        this.updateCameraState(); // Save state before opening slider
         if (!this.images.length) return;
     
         if (!this.isMobile && this.isLocked) {
@@ -1548,7 +1761,10 @@ async init() {
         if (sliderContainer) {
             sliderContainer.classList.remove('hidden');
             sliderContainer.style.pointerEvents = 'auto';
+            sliderContainer.style.display = 'block'; // Ensure visibility
             this.updateSliderDisplay();
+            console.log("Slider opened, index:", this.currentSliderIndex, 
+                        "container display:", sliderContainer.style.display);
         } else {
             console.error("Slider container not found in DOM");
             this.isSliderActive = false;
@@ -1561,15 +1777,16 @@ async init() {
         if (sliderContainer) {
             sliderContainer.classList.add('hidden');
             sliderContainer.style.pointerEvents = 'none';
+            sliderContainer.style.display = 'none';
+            console.log("Slider closed, container display:", sliderContainer.style.display);
         } else {
             console.error("Slider container not found in DOM");
         }
-        
-        if (this.isFocused) {
-            this.resetCamera();
-        } else {
-            console.log("Slider closed; click canvas to re-lock pointer if desired");
-        }
+    
+        // Always reset camera to handle edge cases
+        console.log("Initiating camera reset, isFocused:", this.isFocused);
+        this.resetCamera();
+        this.restoreControls();
     }
     
     prevSliderImage() {
@@ -1642,92 +1859,120 @@ async init() {
         requestAnimationFrame(animateScale);
     }
 
-    focusImage(mesh) {
-        this.updateCameraState();
-        this.isFocused = true;
+   focusImage(mesh) {
+    this.updateCameraState(); // Save state before focusing
+    this.isFocused = true;
 
-        if (this.isMobile) {
-            const targetPos = mesh.position.clone();
-            targetPos.y = this.config.cameraHeight;
-            const distance = 2;
-            const direction = new THREE.Vector3();
-            direction.subVectors(this.camera.position, targetPos).normalize();
-            targetPos.add(direction.multiplyScalar(-distance));
-
-            const startPos = this.camera.position.clone();
-            const startTarget = this.controls.target.clone();
-            const duration = 500;
-            const startTime = performance.now();
-
-            const animateFocus = (time) => {
-                const elapsed = time - startTime;
-                const t = Math.min(elapsed / duration, 1);
-                this.camera.position.lerpVectors(startPos, targetPos, t);
-                this.controls.target.lerpVectors(startTarget, mesh.position, t);
-                this.controls.update();
-
-                if (t < 1) requestAnimationFrame(animateFocus);
-            };
-            requestAnimationFrame(animateFocus);
-        } else {
-            const direction = new THREE.Vector3();
-            this.camera.getWorldDirection(direction);
-
-            const targetPos = mesh.position.clone().sub(direction.multiplyScalar(2));
-            targetPos.y = this.config.cameraHeight;
-
-            const roomBounds = this.rooms[0].position;
-            const edge = this.config.roomSize / 2 - 1;
-            const minX = roomBounds.x - edge;
-            const maxX = roomBounds.x + edge;
-            const minZ = roomBounds.z - edge;
-            const maxZ = roomBounds.z + edge;
-
-            targetPos.x = Math.max(minX, Math.min(maxX, targetPos.x));
-            targetPos.z = Math.max(minZ, Math.min(maxZ, targetPos.z));
-
-            const startPos = this.camera.position.clone();
-            const duration = 500;
-            const startTime = performance.now();
-
-            const animateFocus = (time) => {
-                const elapsed = time - startTime;
-                const t = Math.min(elapsed / duration, 1);
-                this.camera.position.lerpVectors(startPos, targetPos, t);
-                this.controls.getObject().position.copy(this.camera.position);
-                this.camera.lookAt(mesh.position);
-                this.checkCollisions();
-
-                if (t < 1) requestAnimationFrame(animateFocus);
-            };
-            requestAnimationFrame(animateFocus);
-        }
-    }
-
-    resetCamera() {
-        if (!this.isFocused) return;
+    if (this.isMobile) {
+        const targetPos = mesh.position.clone();
+        targetPos.y = this.config.cameraHeight;
+        const distance = 2;
+        const direction = new THREE.Vector3();
+        direction.subVectors(this.camera.position, targetPos).normalize();
+        targetPos.add(direction.multiplyScalar(-distance));
 
         const startPos = this.camera.position.clone();
-        const targetPos = this.previousCameraState.position.clone();
+        const startTarget = this.controls.target.clone();
         const duration = 500;
         const startTime = performance.now();
 
+        const animateFocus = (time) => {
+            const elapsed = time - startTime;
+            const t = Math.min(elapsed / duration, 1);
+            const easedT = 0.5 - 0.5 * Math.cos(Math.PI * t);
+            this.camera.position.lerpVectors(startPos, targetPos, easedT);
+            this.controls.target.lerpVectors(startTarget, mesh.position, easedT);
+            this.controls.update();
+
+            if (t < 1) requestAnimationFrame(animateFocus);
+            else {
+                console.log(`Focused on mesh at ${mesh.position.toArray()}, camera at ${this.camera.position.toArray()}`);
+            }
+        };
+        requestAnimationFrame(animateFocus);
+    } else {
+        const meshRotation = mesh.rotation.y;
+        const offsetDistance = 2;
+        const normal = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), meshRotation);
+        const targetPos = mesh.position.clone().sub(normal.multiplyScalar(offsetDistance));
+        targetPos.y = this.config.cameraHeight;
+
+        const roomBounds = this.rooms[0].position;
+        const edge = this.config.roomSize / 2 - 1;
+        const minX = roomBounds.x - edge;
+        const maxX = roomBounds.x + edge;
+        const minZ = roomBounds.z - edge;
+        const maxZ = roomBounds.z + edge;
+        targetPos.x = Math.max(minX, Math.min(maxX, targetPos.x));
+        targetPos.z = Math.max(minZ, Math.min(maxZ, targetPos.z));
+
+        const startPos = this.camera.position.clone();
+        const startQuat = this.camera.quaternion.clone();
+        const targetQuat = new THREE.Quaternion().setFromRotationMatrix(
+            new THREE.Matrix4().lookAt(targetPos, mesh.position, new THREE.Vector3(0, 1, 0))
+        );
+        const duration = 500;
+        const startTime = performance.now();
+
+        const animateFocus = (time) => {
+            const elapsed = time - startTime;
+            const t = Math.min(elapsed / duration, 1);
+            const easedT = 0.5 - 0.5 * Math.cos(Math.PI * t);
+            this.camera.position.lerpVectors(startPos, targetPos, easedT);
+            this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, easedT);
+            this.controls.getObject().position.copy(this.camera.position);
+            this.checkCollisions();
+
+            if (t < 1) requestAnimationFrame(animateFocus);
+            else {
+                console.log(`Focused on mesh at ${mesh.position.toArray()}, camera at ${this.camera.position.toArray()}`);
+            }
+        };
+        requestAnimationFrame(animateFocus);
+    }
+}
+    
+
+
+    resetCamera() {
+        console.log("Starting camera reset, target position:", this.previousCameraState.position.toArray(), 
+                    "target rotation:", this.previousCameraState.rotation.toArray());
+    
+        // Disable controls to prevent interference
+        this.controls.enabled = false;
+    
+        const startPos = this.camera.position.clone();
+        const targetPos = this.previousCameraState.position.clone();
+        const startQuat = this.camera.quaternion.clone();
+        const targetQuat = new THREE.Quaternion().setFromEuler(this.previousCameraState.rotation);
+        const duration = 500;
+        const startTime = performance.now();
+    
         if (this.isMobile) {
             const startTarget = this.controls.target.clone();
             const targetTarget = this.previousCameraState.target.clone();
-
+    
             const animateReset = (time) => {
                 const elapsed = time - startTime;
                 const t = Math.min(elapsed / duration, 1);
                 const easedT = 0.5 - 0.5 * Math.cos(Math.PI * t);
                 this.camera.position.lerpVectors(startPos, targetPos, easedT);
+                this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, easedT);
                 this.controls.target.lerpVectors(startTarget, targetTarget, easedT);
                 this.controls.update();
-
-                if (t < 1) requestAnimationFrame(animateReset);
-                else {
+    
+                if (t < 1) {
+                    requestAnimationFrame(animateReset);
+                } else {
+                    // Set final state explicitly
+                    this.camera.position.copy(targetPos);
+                    this.camera.quaternion.copy(targetQuat);
+                    this.controls.target.copy(targetTarget);
+                    this.controls.update();
+                    this.controls.enabled = true;
                     this.isFocused = false;
-                    this.closeSlider();
+                    console.log("Camera reset complete, final position:", this.camera.position.toArray(), 
+                                "final rotation:", this.camera.rotation.toArray());
                 }
             };
             requestAnimationFrame(animateReset);
@@ -1737,13 +1982,21 @@ async init() {
                 const t = Math.min(elapsed / duration, 1);
                 const easedT = 0.5 - 0.5 * Math.cos(Math.PI * t);
                 this.camera.position.lerpVectors(startPos, targetPos, easedT);
+                this.camera.quaternion.slerpQuaternions(startQuat, targetQuat, easedT);
                 this.controls.getObject().position.copy(this.camera.position);
                 this.checkCollisions();
-
-                if (t < 1) requestAnimationFrame(animateReset);
-                else {
+    
+                if (t < 1) {
+                    requestAnimationFrame(animateReset);
+                } else {
+                    // Set final state explicitly
+                    this.camera.position.copy(targetPos);
+                    this.camera.quaternion.copy(targetQuat);
+                    this.controls.getObject().position.copy(this.camera.position);
+                    this.controls.enabled = true;
                     this.isFocused = false;
-                    this.closeSlider();
+                    console.log("Camera reset complete, final position:", this.camera.position.toArray(), 
+                                "final rotation:", this.camera.rotation.toArray());
                 }
             };
             requestAnimationFrame(animateReset);
@@ -1755,6 +2008,8 @@ async init() {
             rotation: this.camera.rotation.clone(),
             target: this.isMobile ? this.controls.target.clone() : this.camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(5).add(this.camera.position)
         };
+        console.log("Updated previousCameraState: position=", this.previousCameraState.position.toArray(), 
+                    "rotation=", this.previousCameraState.rotation.toArray());
     }
 
     handleDownload() {
@@ -1927,8 +2182,6 @@ async init() {
         });
     }
 }
-
-
 
 const app = new ThreeJSApp();
 app.init();

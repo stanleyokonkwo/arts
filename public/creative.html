@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modern Virtual Art Gallery with Animation Tools</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    
     <link rel="stylesheet" href="/virtual.css" /> <!-- Changed to absolute path -->
     <script type="importmap">
         {
@@ -16,6 +17,8 @@
             }
         }
     </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
     <style>
         #metadataModal, #shareModal {
             position: fixed;
@@ -57,26 +60,26 @@
 </head>
 <body>
     <div id="ui-overlay">
-        <button id="toggleControlsBtn" class="glow-btn toggle-controls-btn">Hide Controls</button>
+        <button id="toggleControlsBtn" class="glow-btn toggle-controls-btn">Hide</button>
         <div class="control-panel top-panel">
             <h1 class="title">3D Virtual Art Gallery</h1>
             <div class="button-group">
                 <div class="action-group">
-                    <button id="downloadBtn" class="glow-btn">Download View</button>
+                    <button id="downloadBtn" class="glow-btn">Download</button>
                     <span id="downloadStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
                 <div class="action-group">
-                    <button id="recordBtn" class="glow-btn">Start Recording</button>
+                    <button id="recordBtn" class="glow-btn">Record</button>
                     <span id="recordStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
                 <div class="action-group">
                     <button id="autoRotateBtn" class="glow-btn">Auto Rotate</button>
                 </div>
                 <div class="action-group">
-                    <button id="animateObjectsBtn" class="glow-btn">Animate Objects</button>
+                    <button id="animateObjectsBtn" class="glow-btn">Animate</button>
                 </div>
                 <div class="action-group">
-                    <button id="shareBtn" class="glow-btn">Share Gallery</button>
+                    <button id="shareBtn" class="glow-btn">Share</button>
                     <span id="shareStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
                 <div class="action-group">
@@ -94,7 +97,7 @@
                 </div>
             </form>
             <form id="screenshotForm" class="form-group">
-                <h3>Capture Screenshot</h3>
+                <h3>Capture WebPages</h3>
                 <input type="text" id="url" placeholder="Enter URL">
                 <div class="action-group">
                     <button type="submit" class="glow-btn submit-btn">Capture</button>
@@ -136,6 +139,6 @@
     </div>
     <div id="shareModal"></div> <!-- Added here -->
     
-    <script type="module" src="/modern2_Secured.js"></script> <!-- Changed to absolute path -->
+    <script type="module" src="/modern2.js"></script> <!-- Changed to absolute path -->
 </body>
 </html>

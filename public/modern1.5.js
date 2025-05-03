@@ -98,9 +98,10 @@ class ThreeJSApp {
             this.controls = new CustomPointerLockControls(this.camera, this.renderer.domElement);
             this.controls.getObject().position.copy(initialSettings.position);
         }
-
+        
         this.images = [];
         this.sessionId = localStorage.getItem('sessionId');
+        this.shareUrl = null;
         this.textureLoader = new THREE.TextureLoader();
 
         this.audioListener = new THREE.AudioListener();
@@ -116,9 +117,9 @@ class ThreeJSApp {
         this.currentRoom = 0;
         this.isFocused = false;
         this.isLocked = false;
-        this.isSliderActive = false; // Added for slider
-        this.sliderImages = []; // Added for slider
-        this.currentSliderIndex = 0; // Added for slider
+        this.isSliderActive = false; 
+        this.sliderImages = []; 
+        this.currentSliderIndex = 0; 
 
         this.previousCameraState = {
             position: this.camera.position.clone(),
@@ -130,14 +131,14 @@ class ThreeJSApp {
         this.clickDelay = 300;
         this.keys = { w: false, a: false, s: false, d: false, q: false, e: false };
         this.moveSpeed = 0.1;
-        this.rotationSpeed = 0.02; // Define rotation speed (adjustable)
+        this.rotationSpeed = 0.02; 
        
         
         this.time = 0;
         this.lightWall = null;
         this.interactionCooldown = 0;
 
-        // Animation properties
+      
         this.isRecording = false;
         this.recordedFrames = [];
         this.mediaRecorder = null;
@@ -185,6 +186,7 @@ class ThreeJSApp {
         `;
         document.body.appendChild(preloader);
     }
+
     hidePreloader() {
         const preloader = document.getElementById('preloader');
         if (preloader) {
@@ -193,7 +195,7 @@ class ThreeJSApp {
             setTimeout(() => {
                 preloader.remove();
                 this.isLoading = false;
-            }, 500); // Match transition duration
+            }, 500);
         }
     }
 
@@ -230,7 +232,7 @@ class ThreeJSApp {
         floorMaterial.normalMap = noiseTexture;
         floorMaterial.normalScale.set(0.05, 0.05);
     
-        const waveTexture = new THREE.TextureLoader().load('wave.jpg');
+        const waveTexture = new THREE.TextureLoader().load('/wave.jpg');
         waveTexture.wrapS = waveTexture.wrapT = THREE.RepeatWrapping;
         waveTexture.repeat.set(2, 1);
         const wallMaterial = new THREE.MeshStandardMaterial({
@@ -276,7 +278,7 @@ class ThreeJSApp {
         floor.receiveShadow = true;
         room.add(floor);
     
-        // LED strips on the floor
+        
         const ledStripGeometry = new THREE.BoxGeometry(this.config.roomSize, 0.02, 0.1);
         const ledSpacing = this.config.roomSize / 5;
         for (let i = -this.config.roomSize / 2 + ledSpacing; i < this.config.roomSize / 2; i += ledSpacing) {
@@ -554,13 +556,13 @@ class ThreeJSApp {
 
     async setupAudio() {
         try {
-            const backgroundBuffer = await this.loadAudio('sweet.mp3');
+            const backgroundBuffer = await this.loadAudio('/sweet.mp3');
             this.backgroundAudio.setBuffer(backgroundBuffer);
             this.backgroundAudio.setLoop(true);
             this.backgroundAudio.setVolume(0.2);
             this.backgroundAudio.play();
 
-            const clickBuffer = await this.loadAudio('sweet.mp3');
+            const clickBuffer = await this.loadAudio('/sweet.mp3');
             this.clickSound.setBuffer(clickBuffer);
             this.clickSound.setVolume(0.5);
         } catch (error) {
@@ -580,7 +582,7 @@ class ThreeJSApp {
         });
     }
 
-    async init() {
+async init() {
         console.log("🚀 Virtual Gallery loading...");
         if (this.sessionId) await this.loadImages(this.sessionId);
         await this.setupAudio(); // Ensure audio is loaded
@@ -756,6 +758,14 @@ class ThreeJSApp {
             tutorial.style.display = "none";
         }
 
+        const shareBtn = document.getElementById("shareBtn");
+        if (shareBtn) {
+            shareBtn.addEventListener("click", () => this.handleShare());
+            console.log("✅ Share button listener attached");
+        } else {
+            console.error("❌ Share button not found in DOM");
+        }
+
         document.getElementById("uploadForm")?.addEventListener("submit", (e) => this.handleUploadSubmit(e));
         document.getElementById("uploadForm")?.addEventListener("change", (e) => this.showImagePreviewsAndMetadataPrompt(e));
         document.getElementById("screenshotForm")?.addEventListener("submit", (e) => this.handleScreenshotSubmit(e));
@@ -828,6 +838,115 @@ class ThreeJSApp {
             this.onKeyDown(event);
         });
     }
+
+   
+    async handleShare() {
+        console.log(`Share button clicked, sessionId: ${this.sessionId}`);
+
+        if (!this.images.length) {
+            this.showMessage('shareStatus', 'No images in the gallery to share', 'error');
+            console.warn('No images available for sharing');
+            return;
+        }
+
+        this.showStatus('shareStatus', true);
+
+        try {
+            // Get current HTML pathname (e.g., /creative.html)
+            const htmlPath = window.location.pathname;
+            console.log(`Sharing with htmlPath: ${htmlPath}`);
+
+            const response = await fetch(`/api/share/${this.sessionId || 'new'}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ htmlPath })
+            });
+
+            console.log('Fetch response status:', response.status);
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const result = await response.json();
+            console.log('Fetch result:', result);
+
+            if (result.success && result.shareUrl) {
+                this.sessionId = result.sessionId || this.sessionId;
+                this.shareUrl = result.shareUrl;
+                localStorage.setItem('sessionId', this.sessionId);
+                this.showShareLink();
+                this.showMessage('shareStatus', 'Share link generated', 'success');
+            } else {
+                throw new Error('No share URL provided by server');
+            }
+        } catch (error) {
+            console.error('Error sharing gallery:', error);
+            this.showMessage('shareStatus', `Failed to share: ${error.message}`, 'error');
+        } finally {
+            this.showStatus('shareStatus', false);
+        }
+    }
+
+    
+    showShareLink() {
+        console.log("showShareLink called with shareUrl:", this.shareUrl);
+        if (!this.shareUrl) {
+            console.error("No shareUrl available");
+            this.showMessage("shareStatus", "No share link available", "error");
+            return;
+        }
+    
+        const shareModal = document.getElementById("shareModal");
+        if (!shareModal) {
+            console.error("shareModal element not found in DOM");
+            this.showMessage("shareStatus", "Failed to display share modal", "error");
+            return;
+        }
+    
+        shareModal.innerHTML = `
+            <h3>Share Your Gallery</h3>
+            <input type="text" value="${this.shareUrl}" id="shareLinkInput" readonly>
+            <button id="copyShareLink" class="glow-btn">Copy Link</button>
+            <button id="closeShareModal" class="glow-btn">Close</button>
+        `;
+        shareModal.style.display = 'block';
+    
+        console.log("Modal displayed:", shareModal);
+    
+        const copyButton = document.getElementById("copyShareLink");
+        const closeButton = document.getElementById("closeShareModal");
+    
+        if (copyButton) {
+            copyButton.addEventListener("click", async () => {
+                const input = document.getElementById("shareLinkInput");
+                if (input) {
+                    try {
+                        await navigator.clipboard.writeText(input.value);
+                        this.showMessage("shareStatus", "Link copied to clipboard", "success");
+                    } catch (err) {
+                        console.warn("Clipboard API failed, using fallback:", err);
+                        input.select();
+                        document.execCommand("copy");
+                        this.showMessage("shareStatus", "Link copied to clipboard", "success");
+                    }
+                } else {
+                    console.error("shareLinkInput not found");
+                    this.showMessage("shareStatus", "Failed to copy link", "error");
+                }
+            });
+        } else {
+            console.error("copyShareLink button not found");
+        }
+    
+        if (closeButton) {
+            closeButton.addEventListener("click", () => {
+                shareModal.style.display = 'none';
+                shareModal.innerHTML = ''; // Clear to prevent duplicate listeners
+                console.log("Share modal closed");
+            });
+        } else {
+            console.error("closeShareModal button not found");
+        }
+    }
+
 
 
     updateTutorialOnAction(event, tutorial) {
@@ -1074,10 +1193,28 @@ class ThreeJSApp {
                     ];
                 } else {
                     this.imagesToLoad = data.screenshots
-                        .filter(s => s && typeof s === 'string') // Remove undefined/null/non-strings
-                        .map(s => s.trim()); // Ensure no empty strings
-                    this.metadata = Array.isArray(data.metadata) && data.metadata.length ? data.metadata : [];
-    
+                        .filter(s => s && typeof s === 'string')
+                        .map(s => s.trim());
+                    // Handle metadata as object or array
+                    this.metadata = [];
+                    if (data.metadata && typeof data.metadata === 'object') {
+                        if (Array.isArray(data.metadata.metadata)) {
+                            this.metadata = data.metadata.metadata.map(m => ({
+                                filename: m.filename,
+                                title: m.title || 'Untitled',
+                                description: m.description || '',
+                                artist: m.artist || 'Unknown'
+                            }));
+                        } else if (Array.isArray(data.metadata)) {
+                            this.metadata = data.metadata.map(m => ({
+                                filename: m.filename,
+                                title: m.title || 'Untitled',
+                                description: m.description || '',
+                                artist: m.artist || 'Unknown'
+                            }));
+                        }
+                    }
+                    // Fallback if no metadata
                     if (!this.metadata.length && this.imagesToLoad.length) {
                         this.metadata = this.imagesToLoad.map(filename => ({
                             filename: filename.split('/').pop(),
@@ -1469,12 +1606,11 @@ class ThreeJSApp {
                 metadataDiv.style.cssText = 'color: white; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; margin-top: 10px;';
                 sliderContent.appendChild(metadataDiv);
             }
+            console.log("Displaying metadata for image", currentImage.src, ":", currentImage.metadata);
             metadataDiv.innerHTML = `
                 <h3>${currentImage.metadata.title || 'Untitled'}</h3>
-                
                 <p><strong>Url:</strong> ${currentImage.metadata.artist ? `<a href="${currentImage.metadata.artist}" target="_blank">${currentImage.metadata.artist}</a>` : 'None'}</p>
                 <p><strong>Description:</strong> ${currentImage.metadata.description || ''}</p>
-                
             `;
         } else {
             console.error("Slider elements missing:", { sliderImage, sliderIndex, sliderContent });
@@ -1681,46 +1817,51 @@ class ThreeJSApp {
 
 
     
-    async handleUploadSubmit(event) {
-        event.preventDefault();
-        if (!this.pendingFiles.length || !this.metadata.length) {
-            console.log("No files or metadata to upload");
-            return;
-        }
-    
-        const formData = new FormData();
-        this.pendingFiles.forEach((file, index) => {
-            formData.append("images", file);
-            formData.append("title", this.metadata[index].title);
-            formData.append("description", this.metadata[index].description);
-            formData.append("artist", this.metadata[index].artist);
-        });
-    
-        try {
-            const response = await fetch(`/api/upload${this.sessionId ? `/${this.sessionId}` : ''}`, {
-                method: "POST",
-                body: formData
-            });
-            const result = await response.json();
-            if (result.success) {
-                this.sessionId = result.sessionId;
-                localStorage.setItem('sessionId', this.sessionId);
-                this.metadata = this.pendingFiles.map((file, index) => ({
-                    filename: file.name,
-                    title: this.metadata[index].title,
-                    description: this.metadata[index].description,
-                    artist: this.metadata[index].artist
-                }));
-                await new Promise(resolve => setTimeout(resolve, 100));
-                await this.loadImages(this.sessionId);
-                this.pendingFiles = [];
-                document.getElementById('images').value = '';
-                this.previewContainer.innerHTML = '';
+        async handleUploadSubmit(event) {
+            event.preventDefault();
+            if (!this.pendingFiles.length || !this.metadata.length) {
+                console.log("No files or metadata to upload");
+                return;
             }
-        } catch (error) {
-            console.error("Error uploading files:", error);
+        
+            const formData = new FormData();
+            this.pendingFiles.forEach((file, index) => {
+                formData.append("images", file);
+                formData.append("title", this.metadata[index].title);
+                formData.append("description", this.metadata[index].description);
+                formData.append("artist", this.metadata[index].artist);
+            });
+        
+            try {
+                const response = await fetch(`/api/upload${this.sessionId ? `/${this.sessionId}` : ''}`, {
+                    method: "POST",
+                    body: formData
+                });
+                const result = await response.json();
+                if (result.success) {
+                    this.sessionId = result.sessionId;
+                    localStorage.setItem('sessionId', this.sessionId);
+                    // Update this.metadata with backend filenames
+                    this.metadata = result.filePaths.map((filePath, index) => ({
+                        filename: filePath.split('/').pop(),
+                        title: this.metadata[index].title,
+                        description: this.metadata[index].description,
+                        artist: this.metadata[index].artist
+                    }));
+                    console.log("Updated metadata with backend filenames:", this.metadata);
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    await this.loadImages(this.sessionId);
+                    this.pendingFiles = [];
+                    document.getElementById('images').value = '';
+                    this.previewContainer.innerHTML = '';
+                } else {
+                    throw new Error("Upload failed");
+                }
+            } catch (error) {
+                console.error("Error uploading files:", error);
+                this.showMessage("shareStatus", "Failed to upload images", "error");
+            }
         }
-    }
 
     showStatus(statusId, show) {
         const statusElement = document.getElementById(statusId);
