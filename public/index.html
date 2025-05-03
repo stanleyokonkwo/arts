@@ -11,10 +11,14 @@
     <header class="header">
         <nav class="nav">
             <h1 class="logo">ArtSphere</h1>
-            <ul class="nav-links">
+            <button class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <ul class="nav-links" id="nav-links">
                 <li><a href="creative" class="nav-link">Virtual Gallery</a></li>
                 <li><a href="imageexplorer" class="nav-link">360 Explorer</a></li>
-               
             </ul>
             <button id="theme-toggle" class="theme-btn">Toggle Theme</button>
         </nav>
@@ -42,7 +46,6 @@
     <section id="galleries" class="galleries">
         <h3 class="section-title">Explore Our Virtual Galleries</h3>
         <div class="gallery-grid">
-            
             <a href="modern" class="gallery-card">
                 <img src="https://i.ibb.co/whf77FXV/gallery-view-19.png" alt="Modern Art Gallery" class="gallery-img">
                 <div class="gallery-info">
@@ -50,8 +53,6 @@
                     <p class="gallery-desc">A vibrant collection of contemporary pieces with bold colors and abstract forms.</p>
                 </div>
             </a>
-
-            
             <a href="creative" class="gallery-card">
                 <img src="https://i.ibb.co/bSqwc5h/gallery-view-20.png" alt="Classical Gallery" class="gallery-img">
                 <div class="gallery-info">
@@ -74,7 +75,7 @@
         <div class="features-container">
             <div class="feature-card card-1">
                 <h4 class="card-title">3D Virtual Gallery</h4>
-                <p class="card-desc">Want to experience 3d virtual gallery without need for VR or any devices? This is the perfect tool you need. Great for creatives, businesses, photography, exhibtions etc..</p>
+                <p class="card-desc">Want to experience 3d virtual gallery without need for VR or any devices? This is the perfect tool you need. Great for creatives, businesses, photography, exhibitions etc.</p>
                 <div class="card-decor"></div>
             </div>
             <div class="feature-card card-2">
@@ -84,7 +85,7 @@
             </div>
             <div class="feature-card card-3">
                 <h4 class="card-title">Internal 3d website screenshoter</h4>
-                <p class="card-desc">Wonders what's feel like visualising screenshots of your website in a 360 environment and with options to download ? This tool allows internal capture of websites and allows you edit.</p>
+                <p class="card-desc">Wonders what's feel like visualising screenshots of your website in a 360 environment and with options to download? This tool allows internal capture of websites and allows you edit.</p>
                 <div class="card-decor"></div>
             </div>
         </div>
@@ -95,8 +96,7 @@
         <div class="footer-content">
             <p class="footer-text">© 2025 ArtSphere. Crafted with passion.</p>
             <div class="social-links">
-                <a href="https://wa.link/422ieh" class="">WhatsApp</a>
-                
+                <a href="https://wa.link/422ieh" class="social-link">WhatsApp</a>
             </div>
         </div>
     </footer>
@@ -108,6 +108,14 @@
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark');
             themeToggle.textContent = document.body.classList.contains('dark') ? 'Light Theme' : 'Dark Theme';
+        });
+
+        // Hamburger Menu Toggle
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('nav-links');
+        hamburger.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('open');
         });
 
         // Scroll Animation for Features and Galleries
