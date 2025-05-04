@@ -140,6 +140,37 @@ class ThreeJSApp {
 
         this.isLoading = true;
         this.showPreloader();
+
+
+        this.fallbackImages = [
+            {
+                url: 'https://picsum.photos/800/600?random=1',
+                metadata: {
+                    filename: 'demo1.jpg',
+                    title: 'Abstract Serenity',
+                    description: 'A calming abstract artwork with soft colors.',
+                    artist: 'Demo Artist'
+                }
+            },
+            {
+                url: 'https://picsum.photos/800/600?random=2',
+                metadata: {
+                    filename: 'demo2.jpg',
+                    title: 'Urban Landscape',
+                    description: 'A vibrant depiction of a city skyline at dusk.',
+                    artist: 'Demo Artist'
+                }
+            },
+            {
+                url: 'https://picsum.photos/800/600?random=3',
+                metadata: {
+                    filename: 'demo3.jpg',
+                    title: 'Nature Harmony',
+                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    artist: 'Demo Artist'
+                }
+            }
+        ];
     }
 
     showPreloader() {
@@ -598,15 +629,30 @@ class ThreeJSApp {
         }
 
    
-    async init() {
-        console.log("🚀 Virtual Gallery loading...");
-        if (this.sessionId) await this.loadImages(this.sessionId);
-        await this.setupAudio(); // Ensure audio is loaded
-        this.animate();
-        window.addEventListener("resize", () => this.handleResize());
-        this.hidePreloader();
-        console.log("🚀 Virtual Gallery loaded");
-    }
+   async init() {
+           console.log("🚀 Virtual Gallery loading...");
+           if (this.sessionId) {
+               await this.loadImages(this.sessionId);
+               // Check if images were loaded successfully
+               if (!this.imagesToLoad || this.imagesToLoad.length === 0) {
+                   console.warn("No images loaded for session, using fallback images");
+                   this.useFallbackImages();
+                   await this.displayImagesInGallery();
+               }
+           } else {
+               console.log("No sessionId, using fallback images");
+               this.useFallbackImages();
+               await this.displayImagesInGallery();
+           }
+           await this.setupAudio(); // Ensure audio is loaded
+           this.animate();
+           window.addEventListener("resize", () => this.handleResize());
+           this.hidePreloader();
+           console.log("🚀 Virtual Gallery loaded");
+       }
+
+
+
     animate() {
         requestAnimationFrame(() => this.animate());
         const delta = 0.016;
@@ -1423,54 +1469,49 @@ class ThreeJSApp {
                 // Validate and sanitize screenshots
                 if (!Array.isArray(data.screenshots) || data.screenshots.length === 0) {
                     console.warn("No valid screenshots in response, using fallback");
-                    this.imagesToLoad = [
-                        "https://via.placeholder.com/350x250",
-                        "https://via.placeholder.com/350x250"
-                    ];
-                    this.metadata = [
-                        { filename: "placeholder1.jpg", title: "Untitled", description: "", artist: "Unknown" },
-                        { filename: "placeholder2.jpg", title: "Untitled", description: "", artist: "Unknown" }
-                    ];
-                } else {
-                    this.imagesToLoad = data.screenshots
-                        .filter(s => s && typeof s === 'string')
-                        .map(s => s.trim());
-                    // Handle metadata as object or array
-                    this.metadata = [];
-                    if (data.metadata && typeof data.metadata === 'object') {
-                        if (Array.isArray(data.metadata.metadata)) {
-                            this.metadata = data.metadata.metadata.map(m => ({
-                                filename: m.filename,
-                                title: m.title || 'Untitled',
-                                description: m.description || '',
-                                artist: m.artist || 'Unknown'
-                            }));
-                        } else if (Array.isArray(data.metadata)) {
-                            this.metadata = data.metadata.map(m => ({
-                                filename: m.filename,
-                                title: m.title || 'Untitled',
-                                description: m.description || '',
-                                artist: m.artist || 'Unknown'
-                            }));
-                        }
-                    }
-                    // Fallback if no metadata
-                    if (!this.metadata.length && this.imagesToLoad.length) {
-                        this.metadata = this.imagesToLoad.map(filename => ({
-                            filename: filename.split('/').pop(),
-                            title: 'Untitled',
-                            description: '',
-                            artist: 'Unknown'
+                    this.useFallbackImages();
+                    await this.displayImagesInGallery();
+                    return;
+                }
+    
+                this.imagesToLoad = data.screenshots
+                    .filter(s => s && typeof s === 'string')
+                    .map(s => s.trim());
+                // Handle metadata as object or array
+                this.metadata = [];
+                if (data.metadata && typeof data.metadata === 'object') {
+                    if (Array.isArray(data.metadata.metadata)) {
+                        this.metadata = data.metadata.metadata.map(m => ({
+                            filename: m.filename,
+                            title: m.title || 'Untitled',
+                            description: m.description || '',
+                            artist: m.artist || 'Unknown'
+                        }));
+                    } else if (Array.isArray(data.metadata)) {
+                        this.metadata = data.metadata.map(m => ({
+                            filename: m.filename,
+                            title: m.title || 'Untitled',
+                            description: m.description || '',
+                            artist: m.artist || 'Unknown'
                         }));
                     }
+                }
+                // Fallback if no metadata
+                if (!this.metadata.length && this.imagesToLoad.length) {
+                    this.metadata = this.imagesToLoad.map(filename => ({
+                        filename: filename.split('/').pop(),
+                        title: 'Untitled',
+                        description: '',
+                        artist: 'Unknown'
+                    }));
                 }
     
                 console.log("Sanitized imagesToLoad:", this.imagesToLoad);
                 console.log("Sanitized metadata:", this.metadata);
     
                 if (!this.imagesToLoad.length) {
-                    console.error("No valid images to load after sanitization");
-                    return;
+                    console.error("No valid images to load after sanitization, using fallback");
+                    this.useFallbackImages();
                 }
     
                 await this.displayImagesInGallery();
@@ -1480,22 +1521,20 @@ class ThreeJSApp {
                 attempt++;
                 if (attempt === maxRetries) {
                     console.error("Max retries reached, using fallback");
-                    this.imagesToLoad = [
-                        "https://via.placeholder.com/350x250",
-                        "https://via.placeholder.com/350x250"
-                    ];
-                    this.metadata = [
-                        { filename: "placeholder1.jpg", title: "Untitled", description: "", artist: "Unknown" },
-                        { filename: "placeholder2.jpg", title: "Untitled", description: "", artist: "Unknown" }
-                    ];
-                    console.log("Fallback imagesToLoad:", this.imagesToLoad);
-                    console.log("Fallback metadata:", this.metadata);
+                    this.useFallbackImages();
                     await this.displayImagesInGallery();
                 } else {
                     await new Promise(resolve => setTimeout(resolve, 500 * attempt));
                 }
             }
         }
+    }
+
+    useFallbackImages() {
+        this.imagesToLoad = this.fallbackImages.map(img => img.url);
+        this.metadata = this.fallbackImages.map(img => img.metadata);
+        console.log("Using fallback images:", this.imagesToLoad);
+        console.log("Fallback metadata:", this.metadata);
     }
 
     async displayImagesInGallery() {
