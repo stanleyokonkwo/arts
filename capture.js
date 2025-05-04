@@ -125,7 +125,7 @@ class ScreenshotServer {
             const alias = req.params.alias;
             let sessionId;
 
-            // Load aliases and resolve sessionId
+            
             try {
                 const aliases = await fs.readJson(this.aliasFile);
                 sessionId = aliases[alias];
