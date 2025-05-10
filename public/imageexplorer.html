@@ -1,127 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-        <link rel="stylesheet" href="virtual.css" />
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>3D Screenshot Viewer</title>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
-       
-        <script type="importmap">
-            {
-                "imports": {
-                    "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
-                    "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js",
-                    "gif.js": "https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"
-                }
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360 Image Explorer: 3D Viewer & Website Capture</title>
+    <meta name="description" content="Explore images in a 360-degree 3D viewer and capture website screenshots interactively. Upload, view, and download with Virtual Gallery's 360 Image Explorer.">
+    <meta name="keywords" content="360 image explorer, 3D image viewer, website screenshot capture, interactive 3D viewer, virtual gallery">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.virtualgallery.com/imageexplorer">
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="360 Image Explorer: 3D Viewer & Website Capture">
+    <meta property="og:description" content="Interact with images in a 360-degree 3D environment and capture website screenshots. Try Virtual Gallery's 360 Image Explorer now!">
+    <meta property="og:image" content="https://www.virtualgallery.com/images/360-explorer-preview.png">
+    <meta property="og:url" content="https://www.virtualgallery.com/imageexplorer">
+    <meta property="og:type" content="website">
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="360 Image Explorer: 3D Viewer & Website Capture">
+    <meta name="twitter:description" content="Upload images or capture websites in an interactive 3D viewer. Download high-quality scenes with Virtual Gallery.">
+    <meta name="twitter:image" content="https://www.virtualgallery.com/images/360-explorer-preview.png">
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <!-- Styles and Scripts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    <link rel="stylesheet" href="virtual.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js" integrity="sha512-MfOs9vMKBwn9zXwAmskyMnp4tWvf/qKaY3S3sAKI6DXI2eWuP7ZrZfJ8LfsrW0fMKfJOWjLXKy28f4mD7L7r2dQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.module.js",
+                "OrbitControls": "https://cdn.jsdelivr.net/npm/three@0.152.2/examples/jsm/controls/OrbitControls.js",
+                "gif.js": "https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"
             }
-        </script>
-    </head>
-    <body>
-        <div id="ui-overlay">
-            <button id="toggleControlsBtn" class="glow-btn toggle-controls-btn">Hide Controls</button>
+        }
+    </script>
+    <!-- Schema Markup -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "360 Image Explorer",
+        "url": "https://www.virtualgallery.com/imageexplorer",
+        "description": "An interactive 360-degree image viewer and website screenshot capture tool, allowing users to explore and download 3D scenes.",
+        "applicationCategory": "Multimedia",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        }
+    }
+    </script>
+</head>
+<body>
+    <header role="banner">
+        <nav role="navigation">
+            <a href="/" class="home-link" aria-label="Return to Virtual Gallery Home">Back to Virtual Gallery</a>
+        </nav>
+    </header>
 
-            <div class="control-panel top-panel">
-                <h1 class="title">360 Image Explorer</h1>
+    <main aria-labelledby="explorer-title">
+        <section class="intro" aria-labelledby="explorer-title">
+            <h1 id="explorer-title">360 Image Explorer</h1>
+            <p>Interact with images in a stunning 360-degree 3D environment or capture website screenshots for immersive visualization. Upload, explore, and download your creations with ease.</p>
+        </section>
+
+        <div id="ui-overlay">
+            <button id="toggleControlsBtn" class="glow-btn toggle-controls-btn" aria-label="Toggle control panels">Hide Controls</button>
+
+            <!-- Top Panel -->
+            <div class="control-panel top-panel" role="region" aria-label="Main controls">
+                <h2 class="title">360 Image Explorer</h2>
                 <div class="button-group">
                     <div class="action-group">
-                        <button id="toggleViewBtn" class="glow-btn">Toggle View</button>
-                        <span id="toggleViewStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="toggleViewBtn" class="glow-btn" aria-label="Toggle view mode">Toggle View</button>
+                        <span id="toggleViewStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                     <div class="action-group">
-                        <button id="toggleRotateBtn" class="glow-btn">Rotate</button>
-                        <span id="toggleRotateStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="toggleRotateBtn" class="glow-btn" aria-label="Toggle rotation">Rotate</button>
+                        <span id="toggleRotateStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                     <div class="action-group">
-                        <button id="shuffleBtn" class="glow-btn">Shuffle</button>
-                        <span id="shuffleStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="shuffleBtn" class="glow-btn" aria-label="Shuffle images">Shuffle</button>
+                        <span id="shuffleStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                     <div class="action-group">
-                        <button id="downloadBtn" class="glow-btn">Download</button>
-                        <span id="downloadStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="downloadBtn" class="glow-btn" aria-label="Download scene">Download</button>
+                        <span id="downloadStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                     <div class="action-group">
-                        <a href="."><button id="toggleSphericalMapBtn" class="glow-btn">Home</button></a>
+                        <a href="/"><button class="glow-btn" aria-label="Return to home">Home</button></a>
                     </div>
                 </div>
             </div>
 
             <!-- Left Sidebar: Upload and Screenshot -->
-            <div class="control-panel sidebar left-sidebar">
-                <form id="uploadForm" class="form-group">
-                    <h3>Upload Images</h3>
-                    <input type="file" id="images" multiple accept="image/*"> 
-                    <div id="previewContainer" class="preview-container"></div>
+            <div class="control-panel sidebar left-sidebar" role="region" aria-label="Upload and screenshot controls">
+                <form id="uploadForm" class="form-group" aria-labelledby="upload-title">
+                    <h3 id="upload-title">Upload Images</h3>
+                    <label for="images" class="sr-only">Select images to upload</label>
+                    <input type="file" id="images" multiple accept="image/*" aria-describedby="upload-instructions">
+                    <p id="upload-instructions" class="sr-only">Upload multiple images to view in 360-degree 3D environment.</p>
+                    <div id="previewContainer" class="preview-container" aria-live="polite"></div>
                     <div class="action-group">
-                        <button type="submit" class="glow-btn submit-btn">Upload</button>
-                        <span id="uploadStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button type="submit" class="glow-btn submit-btn" aria-label="Upload selected images">Upload</button>
+                        <span id="uploadStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                 </form>
-                <form id="screenshotForm" class="form-group">
-                    <h3>Capture Screenshot</h3>
-                    <input type="text" id="url" placeholder="Enter URL">
+                <form id="screenshotForm" class="form-group" aria-labelledby="screenshot-title">
+                    <h3 id="screenshot-title">Capture Screenshot</h3>
+                    <label for="url" class="sr-only">Enter website URL to capture</label>
+                    <input type="text" id="url" placeholder="Enter URL" aria-describedby="screenshot-instructions">
+                    <p id="screenshot-instructions" class="sr-only">Enter a valid URL to capture a website screenshot in 3D.</p>
                     <div class="action-group">
-                        <button type="submit" class="glow-btn submit-btn">Capture</button>
-                        <span id="screenshotStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button type="submit" class="glow-btn submit-btn" aria-label="Capture website screenshot">Capture</button>
+                        <span id="screenshotStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
-                </form> 
+                </form>
             </div>
 
-            <!-- Right Sidebar: Sliders, Recording, and Environment Map Upload -->
-            <div class="control-panel sidebar right-sidebar">
+            <!-- Right Sidebar: Sliders, Recording, and Environment Map -->
+            <div class="control-panel sidebar right-sidebar" role="region" aria-label="Advanced controls">
                 <div class="slider-group">
                     <label for="zoomSlider">Zoom: <span id="zoomValue">5.0</span></label>
-                    <input type="range" id="zoomSlider" min="0.1" max="10" step="0.1" value="5">
+                    <input type="range" id="zoomSlider" min="0.1" max="10" step="0.1" value="5" aria-valuemin="0.1" aria-valuemax="10" aria-valuenow="5" aria-label="Adjust zoom level">
                 </div>
                 <div class="slider-group">
                     <label for="radiusSlider">Radius: <span id="radiusValue">5.0</span></label>
-                    <input type="range" id="radiusSlider" min="1" max="10" step="0.1" value="5">
+                    <input type="range" id="radiusSlider" min="1" max="10" step="0.1" value="5" aria-valuemin="1" aria-valuemax="10" aria-valuenow="5" aria-label="Adjust radius">
                 </div>
                 <div class="env-map-group">
                     <label for="envMapInput">Upload Environment Map:</label>
-                    <input type="file" id="envMapInput" accept="image/*">
+                    <input type="file" id="envMapInput" accept="image/*" aria-label="Upload environment map image">
                 </div>
                 <div class="recording-group">
                     <div class="action-group">
-                        <button id="startRecordingBtn" class="glow-btn">Start Recording</button>
-                        <span id="startRecordingStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="startRecordingBtn" class="glow-btn" aria-label="Start recording scene">Start Recording</button>
+                        <span id="startRecordingStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                     <div class="action-group">
-                        <button id="stopRecordingBtn" class="glow-btn">Stop Recording</button>
-                        <span id="stopRecordingStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="stopRecordingBtn" class="glow-btn" aria-label="Stop recording scene">Stop Recording</button>
+                        <span id="stopRecordingStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
-                    <span id="recordingIndicator" class="recording-indicator hidden">Recording...</span>
+                    <span id="recordingIndicator" class="recording-indicator hidden" aria-live="polite">Recording...</span>
                 </div>
             </div>
 
             <!-- Bottom Controls: Navigation and Removal -->
-            <div class="control-panel bottom-panel">
+            <div class="control-panel bottom-panel" role="region" aria-label="Navigation and removal controls">
                 <div class="action-group">
-                    <button id="prevPage" class="glow-btn nav-btn">← Prev</button>
-                    <span id="prevPageStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    <button id="prevPage" class="glow-btn nav-btn" aria-label="Previous page">← Prev</button>
+                    <span id="prevPageStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
                 <div class="action-group">
-                    <button id="nextPage" class="glow-btn nav-btn">Next →</button>
-                    <span id="nextPageStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    <button id="nextPage" class="glow-btn nav-btn" aria-label="Next page">Next →</button>
+                    <span id="nextPageStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
                 <div class="action-group">
-                    <button id="toggleRemoveBtn" class="glow-btn">Toggle Remove</button>
-                    <span id="toggleRemoveStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                    <button id="toggleRemoveBtn" class="glow-btn" aria-label="Toggle remove controls">Toggle Remove</button>
+                    <span id="toggleRemoveStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                 </div>
-                <div id="removeControls" class="remove-controls hidden">
+                <div id="removeControls" class="remove-controls hidden" aria-hidden="true">
                     <div class="action-group">
-                        <button id="removeBtn" class="glow-btn danger-btn">Remove Selected</button>
-                        <span id="removeSelectedStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="removeBtn" class="glow-btn danger-btn" aria-label="Remove selected images">Remove Selected</button>
+                        <span id="removeSelectedStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                     <div class="action-group">
-                        <button id="removeAllBtn" class="glow-btn danger-btn">Remove All</button>
-                        <span id="removeAllStatus" class="status-indicator hidden"><i class="fas fa-spinner fa-spin"></i></span>
+                        <button id="removeAllBtn" class="glow-btn danger-btn" aria-label="Remove all images">Remove All</button>
+                        <span id="removeAllStatus" class="status-indicator hidden" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>
                     </div>
                 </div>
             </div>
         </div>
+    </main>
 
-        <script type="module" src="imageexplorer_secured.js"></script>
-    </body>
+    <footer role="contentinfo">
+        <p>© 2025 Virtual Gallery. All rights reserved. <a href="/privacy">Privacy Policy</a> | <a href="/contact">Contact</a></p>
+    </footer>
+
+    <!-- Google Analytics (Replace UA-XXXXX-Y with your tracking ID) -->
+    
+
+    <script type="module" src="imageexplorer_secured.js"></script>
+</body>
 </html>

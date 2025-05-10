@@ -185,6 +185,33 @@ class ThreeJSApp {
                     description: 'A serene landscape with rolling hills and a clear sky.',
                     artist: 'Demo Artist'
                 }
+            },
+            {
+                url: 'https://picsum.photos/800/600?random=4',
+                metadata: {
+                    filename: 'demo4.jpg',
+                    title: 'Nature Harmony',
+                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    artist: 'Demo Artist'
+                }
+            },
+            {
+                url: 'https://picsum.photos/800/600?random=5',
+                metadata: {
+                    filename: 'demo5.jpg',
+                    title: 'Nature Harmony',
+                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    artist: 'Demo Artist'
+                }
+            },
+            {
+                url: 'https://picsum.photos/800/600?random=6',
+                metadata: {
+                    filename: 'demo6.jpg',
+                    title: 'Nature Harmony',
+                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    artist: 'Demo Artist'
+                }
             }
         ];
     }
@@ -1207,9 +1234,9 @@ class ThreeJSApp {
             tutorial.innerHTML = `
                 Great! Now move around:<br>
                 • <strong>W</strong>: Forward<br>
-                • <strong>A</strong>: Left<br>
+                • <strong>A</strong>: Right<br>
                 • <strong>S</strong>: Back<br>
-                • <strong>D</strong>: Right<br>
+                • <strong>D</strong>: Left<br>
                 Try it!
             `;
             tutorial.dataset.step = "move";
