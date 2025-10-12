@@ -1,32 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <meta name="google-adsense-account" content="ca-pub-7165365513552834">
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7165365513552834"
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7165365513552834"
      crossorigin="anonymous"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="ZBhMOQ18rV17iLdci5w0g9aXEjl2iU4NmMpwYBe-LKU" />
-    <title>Virtual Gallery: 3D Art & 360 Explorer</title>
-    <meta name="description" content="Explore immersive 3D virtual art galleries and 360-degree image explorers. Upload art, capture 3D screenshots, and share creations with Virtual Gallery.">
+    <title>Virtual Gallery: Immersive Art Experience Beyond Reality</title>
+    <meta name="description" content="Step into a surreal virtual gallery where art transcends dimensions. Experience liquid animations, particle systems, and gravity-defying galleries.">
     <meta name="keywords" content="online 3D art gallery, virtual art gallery, 360 image explorer, immersive art platform, 3D virtual exhibition, interactive art experience">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://www.virtualgallery.com/">
     <!-- Open Graph Tags -->
-    <meta property="og:title" content="Virtual Gallery: 3D Art & 360 Explorer">
-    <meta property="og:description" content="Discover 3D virtual art galleries and interactive 360-degree experiences. Perfect for artists, creatives, and businesses. Start now!">
+    <meta property="og:title" content="Virtual Gallery: Immersive Art Experience">
+    <meta property="og:description" content="Discover 3D virtual art galleries with liquid animations and interactive experiences. Perfect for artists, creatives, and businesses.">
     <meta property="og:image" content="https://www.virtualgallery.com/images/gallery-view-19.png">
     <meta property="og:url" content="https://www.virtualgallery.com/">
     <meta property="og:type" content="website">
     <!-- Twitter Card Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Virtual Gallery: 3D Art & 360 Explorer">
-    <meta name="twitter:description" content="Immerse yourself in 3D art galleries and 360-degree environments. Explore modern and classical art now!">
+    <meta name="twitter:title" content="Virtual Gallery: Immersive Art Experience">
+    <meta name="twitter:description" content="Experience art in 3D galleries with surreal animations and 360-degree environments.">
     <meta name="twitter:image" content="https://www.virtualgallery.com/images/gallery-view-19.png">
     <!-- Favicon -->
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="stylesheet" href="index.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
     <!-- Schema Markup -->
     <script type="application/ld+json">
     [
@@ -38,303 +36,2506 @@
             "logo": "https://www.virtualgallery.com/logo.png",
             "description": "Virtual Gallery offers immersive 3D virtual art galleries and 360-degree interactive experiences for artists, creatives, and businesses.",
             "sameAs": ["https://wa.link/422ieh"]
-        },
-        {
-            "@context": "https://schema.org",
-            "@type": "WebApplication",
-            "name": "Virtual Gallery",
-            "url": "https://www.virtualgallery.com/",
-            "description": "A platform for immersive 3D virtual art galleries and 360-degree image exploration, with tools for uploading art, capturing 3D screenshots, and sharing creations.",
-            "applicationCategory": "Entertainment",
-            "operatingSystem": "Web",
-            "creator": {
-                "@type": "Organization",
-                "name": "Virtual Gallery"
-            },
-            "featureList": [
-                "3D Virtual Galleries",
-                "360 Image Explorer",
-                "3D Website Screenshot Capture",
-                "Interactive Animations",
-                "Real-Time Recordings"
-            ]
         }
     ]
     </script>
+    
+    <style>
+/* ==================== VARIABLES ==================== */
+:root {
+    --primary: #667eea;
+    --secondary: #764ba2;
+    --accent: #f093fb;
+    --accent-2: #f5576c;
+    --dark: #0f0f1e;
+    --dark-2: #1a1a2e;
+    --light: #ffffff;
+    --gray: #a8a8b3;
+    
+    --glow-primary: rgba(102, 126, 234, 0.6);
+    --glow-accent: rgba(240, 147, 251, 0.6);
+    
+    --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* ==================== RESET ==================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--dark);
+    color: var(--light);
+    overflow-x: hidden;
+    line-height: 1.6;
+    position: relative;
+}
+
+/* ==================== PARTICLE CANVAS ==================== */
+.particle-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ==================== LIQUID BACKGROUND ==================== */
+.liquid-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.liquid-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.liquid-blob {
+    animation: morphBlob 20s ease-in-out infinite;
+}
+
+.blob-1 { animation-delay: 0s; }
+.blob-2 { animation-delay: -5s; }
+.blob-3 { animation-delay: -10s; }
+.blob-4 { animation-delay: -15s; }
+
+@keyframes morphBlob {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    25% {
+        transform: translate(100px, -50px) scale(1.2);
+    }
+    50% {
+        transform: translate(-75px, 75px) scale(0.8);
+    }
+    75% {
+        transform: translate(50px, 50px) scale(1.1);
+    }
+}
+
+/* ==================== WHATSAPP MAGNETIC ==================== */
+.whatsapp-magnetic {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 70px;
+    height: 70px;
+    z-index: 1000;
+    cursor: pointer;
+}
+
+.magnetic-wrap {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 40px rgba(37, 211, 102, 0.4);
+    transition: transform 0.3s var(--transition-bounce);
+    position: relative;
+}
+
+.magnetic-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    background: linear-gradient(135deg, #25d366, #128c7e);
+    border-radius: 50%;
+    filter: blur(15px);
+    opacity: 0.6;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.magnetic-wrap svg {
+    width: 36px;
+    height: 36px;
+    color: white;
+    position: relative;
+    z-index: 1;
+}
+
+.whatsapp-magnetic:hover .magnetic-wrap {
+    transform: scale(1.1);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.3;
+    }
+}
+
+/* ==================== NAVIGATION MORPH ==================== */
+.navbar-morph {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    padding: 1.5rem 3rem;
+    z-index: 100;
+    background: rgba(15, 15, 30, 0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.4s var(--transition-smooth);
+}
+
+.navbar-morph.scrolled {
+    padding: 1rem 3rem;
+    background: rgba(15, 15, 30, 0.95);
+}
+
+.nav-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.logo-sphere {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    animation: rotateSphere 10s linear infinite;
+}
+
+.sphere-inner {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 50%;
+    position: relative;
+    box-shadow: 0 0 30px var(--glow-primary);
+}
+
+.sphere-inner::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 15px;
+    height: 15px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    filter: blur(3px);
+}
+
+@keyframes rotateSphere {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 2px;
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.logo-virtual {
+    color: var(--light);
+}
+
+.logo-gallery {
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.menu-morph {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    position: relative;
+    z-index: 10;
+}
+
+.menu-line {
+    width: 30px;
+    height: 2px;
+    background: var(--light);
+    transition: all 0.3s var(--transition-smooth);
+}
+
+.menu-circle {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--primary);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: transform 0.3s var(--transition-bounce);
+}
+
+.menu-morph.active .menu-circle {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.menu-morph.active .menu-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.menu-morph.active .menu-line:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-morph.active .menu-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -7px);
+}
+
+.nav-menu-morph {
+    display: flex;
+    list-style: none;
+    gap: 3rem;
+    align-items: center;
+}
+
+.nav-item-morph {
+    position: relative;
+}
+
+.nav-link-morph {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--light);
+    text-decoration: none;
+    position: relative;
+    display: block;
+    overflow: hidden;
+    padding: 0.5rem 0;
+}
+
+.link-text {
+    display: block;
+    transition: transform 0.4s var(--transition-smooth);
+}
+
+.link-hover {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateY(100%);
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: transform 0.4s var(--transition-smooth);
+}
+
+.nav-link-morph:hover .link-text {
+    transform: translateY(-100%);
+}
+
+.nav-link-morph:hover .link-hover {
+    transform: translateY(0);
+}
+
+/* Mega Dropdown */
+.mega-dropdown {
+    position: absolute;
+    top: calc(100% + 20px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 26, 46, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s var(--transition-smooth);
+    min-width: 500px;
+}
+
+.nav-item-morph:hover .mega-dropdown {
+    opacity: 1;
+    visibility: visible;
+}
+
+.dropdown-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.dropdown-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: var(--light);
+    transition: all 0.3s var(--transition-smooth);
+}
+
+.dropdown-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--primary);
+    transform: translateY(-5px);
+}
+
+.card-preview {
+    width: 100%;
+    height: 120px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.card-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s var(--transition-smooth);
+}
+
+.dropdown-card:hover .card-preview img {
+    transform: scale(1.1);
+}
+
+.dropdown-card h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.dropdown-card p {
+    font-size: 0.9rem;
+    color: var(--gray);
+}
+
+/* ==================== HERO GRAVITY ==================== */
+.hero-gravity {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    padding: 8rem 3rem 4rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.gravity-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-content-gravity {
+    animation: fadeInLeft 1s var(--transition-smooth);
+}
+
+@keyframes fadeInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.glitch-wrapper {
+    margin-bottom: 2rem;
+}
+
+.hero-title-gravity {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 0.9;
+    margin-bottom: 0.2rem;
+    position: relative;
+    color: var(--light);
+}
+
+.hero-title-gravity.accent {
+    background: linear-gradient(135deg, var(--primary), var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    animation: glitchAnimation 5s infinite;
+}
+
+@keyframes glitchAnimation {
+    0%, 90%, 100% {
+        transform: translateX(0);
+    }
+    92%, 94% {
+        transform: translateX(-3px);
+    }
+    93%, 95% {
+        transform: translateX(3px);
+    }
+}
+
+.hero-description-gravity {
+    font-size: 1.2rem;
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    max-width: 500px;
+}
+
+.hero-cta-gravity {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 4rem;
+    flex-wrap: wrap;
+}
+
+.btn-gravity {
+    padding: 1.2rem 2.5rem;
+    border-radius: 50px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.4s var(--transition-smooth);
+    border: 2px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-primary-gravity {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: var(--light);
+    box-shadow: 0 10px 40px var(--glow-primary);
+}
+
+.btn-primary-gravity::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    opacity: 0;
+    transition: opacity 0.4s var(--transition-smooth);
+}
+
+.btn-primary-gravity:hover::before {
+    opacity: 1;
+}
+
+.btn-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.btn-icon {
+    font-size: 1.5rem;
+    transition: transform 0.4s var(--transition-smooth);
+}
+
+.btn-primary-gravity:hover .btn-icon {
+    transform: translateX(5px);
+}
+
+.btn-secondary-gravity {
+    background: transparent;
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-secondary-gravity:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-3px);
+}
+
+.hero-metrics {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.metric-item {
+    text-align: center;
+}
+
+.metric-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value.infinite {
+    font-size: 4rem;
+}
+
+.metric-label {
+    font-size: 0.8rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.metric-divider {
+    width: 1px;
+    height: 60px;
+    background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+}
+
+/* Hero Visual */
+.hero-visual-gravity {
+    position: relative;
+    height: 700px;
+    animation: fadeInRight 1s var(--transition-smooth);
+}
+
+@keyframes fadeInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.floating-gallery-preview {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.preview-card {
+    position: absolute;
+    border-radius: 20px;
+    overflow: hidden;
+    background: rgba(26, 26, 46, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    transition: transform 0.3s var(--transition-smooth);
+}
+
+.preview-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 15px;
+}
+
+.card-float-1 {
+    width: 400px;
+    height: 500px;
+    top: 0;
+    left: 0;
+    animation: floatCard 6s ease-in-out infinite;
+    z-index: 2;
+}
+
+.card-float-2 {
+    width: 350px;
+    height: 420px;
+    bottom: 0;
+    right: 0;
+    animation: floatCard 7s ease-in-out infinite;
+    animation-delay: -3s;
+    z-index: 1;
+}
+
+@keyframes floatCard {
+    0%, 100% {
+        transform: translateY(0) rotate(2deg);
+    }
+    50% {
+        transform: translateY(-30px) rotate(-2deg);
+    }
+}
+
+.preview-card:hover {
+    transform: scale(1.05) !important;
+}
+
+.card-glow-effect {
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 20px;
+    opacity: 0;
+    filter: blur(20px);
+    transition: opacity 0.4s var(--transition-smooth);
+    z-index: -1;
+}
+
+.preview-card:hover .card-glow-effect {
+    opacity: 0.8;
+}
+
+.card-reflection {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+/* Geometric Shapes */
+.geometric-shapes {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.shape {
+    position: absolute;
+    border: 2px solid var(--primary);
+    opacity: 0.2;
+}
+
+.shape-1 {
+    width: 100px;
+    height: 100px;
+    top: 10%;
+    right: 10%;
+    animation: rotateShape 15s linear infinite;
+}
+
+.shape-2 {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    bottom: 20%;
+    left: 5%;
+    animation: floatShape 10s ease-in-out infinite;
+}
+
+.shape-3 {
+    width: 60px;
+    height: 60px;
+    top: 50%;
+    left: 20%;
+    transform: rotate(45deg);
+    animation: rotateShape 20s linear infinite reverse;
+}
+
+.shape-4 {
+    width: 120px;
+    height: 120px;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    bottom: 10%;
+    right: 30%;
+    animation: floatShape 12s ease-in-out infinite;
+}
+
+@keyframes rotateShape {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes floatShape {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* ==================== ABOUT SPLIT ==================== */
+.about-split {
+    padding: 8rem 3rem;
+    position: relative;
+    background: linear-gradient(180deg, transparent, rgba(102, 126, 234, 0.05), transparent);
+}
+
+.split-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+}
+
+.section-label {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.label-line {
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), transparent);
+}
+
+.label-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--primary);
+}
+
+.section-title-split {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 3rem;
+}
+
+.title-highlight {
+    display: block;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.about-content-blocks {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.content-block {
+    padding-left: 3rem;
+    position: relative;
+}
+
+.block-number {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: var(--primary);
+    opacity: 0.2;
+}
+
+.content-block h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.8rem;
+    color: var(--light);
+}
+
+.content-block p {
+    color: var(--gray);
+    line-height: 1.8;
+}
+
+/* Visual Stack */
+.visual-stack {
+    position: relative;
+    height: 500px;
+}
+
+.stack-card {
+    position: absolute;
+    width: 100%;
+    background: rgba(26, 26, 46, 0.8);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2.5rem;
+    transition: all 0.4s var(--transition-smooth);
+    animation: stackFloat 6s ease-in-out infinite;
+}
+
+.stack-card:nth-child(1) {
+    top: 0;
+    left: 0;
+    z-index: 3;
+    animation-delay: 0s;
+}
+
+.stack-card:nth-child(2) {
+    top: 60px;
+    left: 40px;
+    z-index: 2;
+    animation-delay: 2s;
+}
+
+.stack-card:nth-child(3) {
+    top: 120px;
+    left: 80px;
+    z-index: 1;
+    animation-delay: 4s;
+}
+
+@keyframes stackFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+.stack-card:hover {
+    transform: translateY(-10px) translateX(-10px) scale(1.02);
+    border-color: var(--primary);
+    z-index: 10;
+}
+
+.icon-container {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.icon-container svg {
+    width: 32px;
+    height: 32px;
+    color: var(--light);
+}
+
+.stack-card h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    margin-bottom: 0.8rem;
+}
+
+.stack-card p {
+    color: var(--gray);
+    font-size: 0.95rem;
+}
+
+/* ==================== GALLERY MAGNETIC ==================== */
+.gallery-magnetic {
+    padding: 8rem 3rem;
+    position: relative;
+}
+
+.magnetic-container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.section-header-magnetic {
+    text-align: center;
+    margin-bottom: 5rem;
+}
+
+.header-tag {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 50px;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 2rem;
+}
+
+.header-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 0.9;
+}
+
+.title-line {
+    display: block;
+}
+
+.title-line:last-child {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.gallery-grid-magnetic {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 3rem;
+}
+
+.magnetic-card {
+    background: rgba(26, 26, 46, 0.6);
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    overflow: hidden;
+    position: relative;
+    text-decoration: none;
+    color: var(--light);
+    transition: all 0.5s var(--transition-smooth);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    display: block;
+}
+
+.card-border {
+    position: absolute;
+    inset: 0;
+    border-radius: 30px;
+    padding: 2px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s var(--transition-smooth);
+}
+
+.magnetic-card:hover .card-border {
+    opacity: 1;
+}
+
+.card-image-container {
+    position: relative;
+    height: 350px;
+    overflow: hidden;
+}
+
+.card-image-magnetic {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--transition-smooth);
+}
+
+.magnetic-card:hover .card-image-magnetic {
+    transform: scale(1.1);
+}
+
+.image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 15, 30, 0.95), transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.4s var(--transition-smooth);
+}
+
+.magnetic-card:hover .image-overlay {
+    opacity: 1;
+}
+
+.overlay-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.explore-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 2px;
+}
+
+.explore-arrow {
+    font-size: 2.5rem;
+    animation: arrowBounce 1s ease-in-out infinite;
+}
+
+@keyframes arrowBounce {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(10px);
+    }
+}
+
+.card-info-magnetic {
+    padding: 2.5rem;
+}
+
+.info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-tag {
+    padding: 0.4rem 1rem;
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid var(--primary);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--primary);
+}
+
+.card-number {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 4rem;
+    color: rgba(255, 255, 255, 0.05);
+    line-height: 1;
+}
+
+.card-title-magnetic {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.card-description-magnetic {
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+}
+
+.card-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.card-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* ==================== FEATURES CAROUSEL ==================== */
+.features-carousel {
+    padding: 8rem 3rem;
+    background: radial-gradient(ellipse at center, rgba(102, 126, 234, 0.1), transparent);
+}
+
+.carousel-container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+.section-header-carousel {
+    text-align: center;
+    margin-bottom: 5rem;
+}
+
+.carousel-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 6vw, 5rem);
+}
+
+.title-accent {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.cards-3d-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 3rem;
+    perspective: 1000px;
+}
+
+.card-3d {
+    height: 350px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.6s var(--transition-smooth);
+    cursor: pointer;
+}
+
+.card-3d:hover {
+    transform: rotateY(180deg);
+}
+
+.card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 25px;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.card-front {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(240, 147, 251, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-back {
+    background: linear-gradient(135deg, rgba(118, 75, 162, 0.3), rgba(245, 87, 108, 0.3));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: rotateY(180deg);
+}
+
+.card-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px var(--glow-primary);
+}
+
+.card-icon svg {
+    width: 40px;
+    height: 40px;
+    color: var(--light);
+}
+
+.card-3d h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+}
+
+.card-3d p {
+    color: var(--gray);
+    line-height: 1.8;
+}
+
+/* ==================== CTA HOLOGRAPHIC ==================== */
+.cta-holographic {
+    padding: 8rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.holographic-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.hologram-effect {
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle, var(--primary), transparent 70%);
+    opacity: 0.1;
+    animation: holoRotate 10s linear infinite;
+}
+
+@keyframes holoRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.cta-title-holo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+}
+
+.title-glitch {
+    position: relative;
+    display: inline-block;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.cta-text-holo {
+    font-size: 1.3rem;
+    color: var(--gray);
+    margin-bottom: 3rem;
+}
+
+.cta-buttons-holo {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-holo {
+    padding: 1.3rem 3rem;
+    border-radius: 50px;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s var(--transition-smooth);
+    display: inline-block;
+}
+
+.btn-primary-holo {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: var(--light);
+    box-shadow: 0 15px 50px var(--glow-primary);
+}
+
+.btn-shine {
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: shine 3s ease-in-out infinite;
+}
+
+@keyframes shine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    50%, 100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+.btn-outline-holo {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-holo:hover {
+    transform: translateY(-5px);
+}
+
+/* ==================== FOOTER ANIMATED ==================== */
+.footer-animated {
+    padding: 5rem 3rem 2rem;
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-lines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    opacity: 0.1;
+    pointer-events: none;
+}
+
+.line {
+    position: absolute;
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+}
+
+.line-1 {
+    left: 20%;
+    animation: lineMove 4s linear infinite;
+}
+
+.line-2 {
+    left: 50%;
+    animation: lineMove 5s linear infinite;
+    animation-delay: -2s;
+}
+
+.line-3 {
+    left: 80%;
+    animation: lineMove 6s linear infinite;
+    animation-delay: -4s;
+}
+
+@keyframes lineMove {
+    0% {
+        transform: translateY(-100%);
+    }
+    100% {
+        transform: translateY(100%);
+    }
+}
+
+.footer-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.footer-main {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 4rem;
+    margin-bottom: 3rem;
+}
+
+.brand-logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.logo-sphere-footer {
+    width: 30px;
+    height: 30px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    border-radius: 50%;
+    box-shadow: 0 0 20px var(--glow-primary);
+}
+
+.brand-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 2px;
+}
+
+.brand-accent {
+    color: var(--primary);
+}
+
+.brand-tagline {
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+}
+
+.footer-social {
+    display: flex;
+    gap: 1rem;
+}
+
+.social-btn {
+    width: 45px;
+    height: 45px;
+    background: rgba(102, 126, 234, 0.2);
+    border: 1px solid var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    transition: all 0.3s var(--transition-smooth);
+}
+
+.social-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.social-btn:hover {
+    background: var(--primary);
+    color: var(--light);
+    transform: translateY(-3px);
+}
+
+.footer-links-group {
+    display: contents;
+}
+
+.footer-column {
+}
+
+.column-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    color: var(--light);
+}
+
+.footer-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.footer-list a {
+    color: var(--gray);
+    text-decoration: none;
+    transition: color 0.3s var(--transition-smooth);
+}
+
+.footer-list a:hover {
+    color: var(--primary);
+}
+
+.footer-bottom {
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1200px) {
+    .gravity-container,
+    .split-container {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+    }
+    
+    .hero-visual-gravity {
+        height: 500px;
+    }
+    
+    .visual-stack {
+        height: 400px;
+    }
+    
+    .gallery-grid-magnetic {
+        grid-template-columns: 1fr;
+    }
+    
+    .footer-main {
+        grid-template-columns: 1fr;
+        gap: 3rem;
+        text-align: center;
+    }
+    
+    .footer-social {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-morph {
+        padding: 1rem 1.5rem;
+    }
+    
+    .menu-morph {
+        display: flex;
+    }
+    
+    .nav-menu-morph {
+        position: fixed;
+        top: 80px;
+        left: 0;
+        width: 100%;
+        height: calc(100vh - 80px);
+        background: rgba(15, 15, 30, 0.98);
+        backdrop-filter: blur(20px);
+        flex-direction: column;
+        justify-content: center;
+        gap: 2rem;
+        transform: translateX(-100%);
+        transition: transform 0.4s var(--transition-smooth);
+    }
+    
+    .nav-menu-morph.active {
+        transform: translateX(0);
+    }
+    
+    .mega-dropdown {
+        position: static;
+        transform: none;
+        margin-top: 1rem;
+        min-width: auto;
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .dropdown-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .hero-gravity {
+        padding: 6rem 1.5rem 3rem;
+    }
+    
+    .hero-cta-gravity {
+        flex-direction: column;
+    }
+    
+    .btn-gravity {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .hero-visual-gravity {
+        height: 400px;
+        order: -1;
+    }
+    
+    .card-float-1 {
+        width: 280px;
+        height: 350px;
+    }
+    
+    .card-float-2 {
+        width: 240px;
+        height: 300px;
+    }
+    
+    .about-split,
+    .gallery-magnetic,
+    .features-carousel,
+    .cta-holographic {
+        padding: 5rem 1.5rem;
+    }
+    
+    .content-block {
+        padding-left: 2rem;
+    }
+    
+    .block-number {
+        font-size: 2rem;
+    }
+    
+    .cards-3d-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .cta-buttons-holo {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .btn-holo {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .whatsapp-magnetic {
+        width: 60px;
+        height: 60px;
+        bottom: 20px;
+        right: 20px;
+    }
+    
+    .magnetic-wrap svg {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .gallery-grid-magnetic {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-metrics {
+        gap: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+    }
+    
+    .metric-divider {
+        height: 40px;
+    }
+}
+    </style>
 </head>
 <body>
-      <a href="https://wa.link/ijb4dh" class="bfloat" target="_blank">
-            <img src="https://i.ibb.co/BNbtcGm/Pngtree-whatsapp-phone-icon-8704826.png" class=".my-float" style="height:100px;width:100px;margin-top: 550px;"/>
-        </a>
-     <style>
-            .bfloat {
-                position: fixed;
-                width: 100px;
-                height: 90px;
-              
-               
-                color: #fff;
-                text-align: center;
-                font-size: 30px;
-                z-index: 100;
-                animation: bounce 2s infinite;
-            }
-        
-           
-        
-            @keyframes bounce {
-                0%, 20%, 50%, 80%, 100% {
-                    transform: translateY(0);
-                }
-                40% {
-                    transform: translateY(-20px);
-                }
-                60% {
-                    transform: translateY(-10px);
-                }
-            }
-        </style>
-        
-      
-    <header class="header">
-        <nav class="nav">
-            <h1 class="logo">VirtualGallery</h1>
-            <button class="hamburger" id="hamburger" aria-expanded="false" aria-label="Toggle navigation">
-                <span></span>
-                <span></span>
-                <span></span>
+    <!-- Particle Canvas Background -->
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    
+    <!-- Liquid Background -->
+    <div class="liquid-bg">
+        <svg class="liquid-svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+            <defs>
+                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:0.8" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:0.8" />
+                </linearGradient>
+                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#f093fb;stop-opacity:0.6" />
+                    <stop offset="100%" style="stop-color:#f5576c;stop-opacity:0.6" />
+                </linearGradient>
+                <filter id="goo">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
+                    <feColorMatrix in="blur" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
+                    <feBlend in="SourceGraphic" in2="goo" />
+                </filter>
+            </defs>
+            <g filter="url(#goo)">
+                <circle class="liquid-blob blob-1" cx="300" cy="300" r="150" fill="url(#gradient1)" />
+                <circle class="liquid-blob blob-2" cx="1600" cy="200" r="200" fill="url(#gradient2)" />
+                <circle class="liquid-blob blob-3" cx="1200" cy="800" r="180" fill="url(#gradient1)" />
+                <circle class="liquid-blob blob-4" cx="400" cy="700" r="120" fill="url(#gradient2)" />
+            </g>
+        </svg>
+    </div>
+
+    <!-- WhatsApp Float with Magnetic Effect -->
+    <a href="https://wa.link/ijb4dh" class="whatsapp-magnetic" target="_blank" aria-label="Contact on WhatsApp">
+        <div class="magnetic-wrap">
+            <svg viewBox="0 0 32 32" fill="currentColor">
+                <path d="M16 0C7.164 0 0 7.164 0 16c0 2.828.736 5.484 2.016 7.792L0 32l8.416-2.016C10.724 31.264 13.38 32 16 32c8.836 0 16-7.164 16-16S24.836 0 16 0zm0 29.333c-2.476 0-4.868-.684-6.944-1.984l-.496-.3-5.14 1.236 1.236-5.14-.3-.496C2.684 20.868 2 18.476 2 16 2 8.832 8.832 2 16 2s14 6.832 14 14-6.832 13.333-14 13.333zm7.56-10.24c-.412-.208-2.44-1.204-2.82-1.34-.38-.136-.656-.204-.932.204-.276.412-1.068 1.34-1.308 1.616-.24.276-.48.312-.892.104-.412-.208-1.74-.64-3.312-2.044-1.224-1.092-2.052-2.44-2.292-2.852-.24-.412-.024-.636.18-.84.184-.184.412-.48.616-.72.204-.24.276-.412.412-.688.136-.276.068-.516-.036-.72-.104-.204-.932-2.248-1.276-3.076-.336-.804-.676-.696-.932-.708-.24-.012-.516-.012-.792-.012s-.72.104-1.1.516c-.38.412-1.448 1.416-1.448 3.452s1.484 4.004 1.688 4.28c.204.276 2.912 4.444 7.048 6.232.984.424 1.752.676 2.352.868.988.312 1.888.268 2.596.164.792-.12 2.44-.996 2.784-1.956.344-.96.344-1.784.24-1.956-.104-.172-.38-.276-.792-.48z"/>
+            </svg>
+        </div>
+    </a>
+
+    <!-- Navigation with Morphing Background -->
+    <nav class="navbar-morph" id="navbar">
+        <div class="nav-container">
+            <div class="logo-container">
+                <div class="logo-sphere">
+                    <div class="sphere-inner"></div>
+                </div>
+                <h1 class="logo-text">
+                    <span class="logo-virtual">VIRTUAL</span>
+                    <span class="logo-gallery">GALLERY</span>
+                </h1>
+            </div>
+            
+            <button class="menu-morph" id="menuToggle" aria-label="Toggle menu">
+                <span class="menu-line"></span>
+                <span class="menu-line"></span>
+                <span class="menu-line"></span>
+                <span class="menu-circle"></span>
             </button>
-            <ul class="nav-links" id="nav-links">
-                <li class="dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" aria-haspopup="true" aria-expanded="false">Virtual Gallery</a>
-                    <ul class="dropdown-menu">
-                        <li><a href="modern" class="dropdown-item">Modern Art</a></li>
-                        <li><a href="creative" class="dropdown-item">Classical</a></li>
-                        <!-- <li><a href="creative" class="dropdown-item">Surreal</a></li> -->
-                    </ul>
+
+            <ul class="nav-menu-morph" id="navMenu">
+                <li class="nav-item-morph">
+                    <a href="#" class="nav-link-morph" data-text="GALLERIES">
+                        <span class="link-text">GALLERIES</span>
+                        <span class="link-hover">GALLERIES</span>
+                    </a>
+                    <div class="mega-dropdown">
+                        <div class="dropdown-grid">
+                            <a href="modern" class="dropdown-card">
+                                <div class="card-preview">
+                                    <img src="https://i.ibb.co/whf77FXV/gallery-view-19.png" alt="Modern">
+                                </div>
+                                <h4>Modern Art</h4>
+                                <p>Contemporary expressions</p>
+                            </a>
+                            <a href="creative" class="dropdown-card">
+                                <div class="card-preview">
+                                    <img src="https://i.ibb.co/bSqwc5h/gallery-view-20.png" alt="Classical">
+                                </div>
+                                <h4>Classical</h4>
+                                <p>Timeless masterpieces</p>
+                            </a>
+                        </div>
+                    </div>
                 </li>
-                <li><a href="imageexplorer" class="nav-link">360 Explorer</a></li>
-                <li><a href="#about" class="nav-link">About</a></li>
-                <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+                <li class="nav-item-morph">
+                    <a href="imageexplorer" class="nav-link-morph" data-text="360° EXPLORER">
+                        <span class="link-text">360° EXPLORER</span>
+                        <span class="link-hover">360° EXPLORER</span>
+                    </a>
+                </li>
+                <li class="nav-item-morph">
+                    <a href="#about" class="nav-link-morph" data-text="ABOUT">
+                        <span class="link-text">ABOUT</span>
+                        <span class="link-hover">ABOUT</span>
+                    </a>
+                </li>
+                <li class="nav-item-morph">
+                    <a href="#experience" class="nav-link-morph" data-text="EXPERIENCE">
+                        <span class="link-text">EXPERIENCE</span>
+                        <span class="link-hover">EXPERIENCE</span>
+                    </a>
+                </li>
             </ul>
-            <!-- <button id="theme-toggle" class="theme-btn">Toggle Theme</button> -->
-        </nav>
-    </header>
-
-    <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-explorer">
-            <video autoplay muted loop class="hero-video">
-                <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-            <div class="hero-overlay"></div>
         </div>
-        <div class="hero-content">
-            <h2 class="hero-title">Immerse Yourself in 3D Art</h2>
-            <p class="hero-subtitle">Explore surreal 3D virtual galleries and interactive 360-degree experiences, crafted for artists, creatives, and visionaries.</p>
-            <div class="cta-container">
-                <a href="creative" class="cta-btn primary">Explore 3D Galleries</a>
-                <a href="imageexplorer" class="cta-btn secondary">Try 360 Explorer</a>
-            </div>
-        </div>
-    </section>
+    </nav>
 
-    <section id="about" class="about">
-        <h3 class="section-title">What is Virtual Gallery?</h3>
-        <div class="about-content">
-            <p class="about-desc">Virtual Gallery is a cutting-edge platform that brings art to life through immersive 3D virtual galleries and 360-degree image exploration. Whether you're an artist showcasing your work, a business creating interactive exhibitions, or a creative exploring new dimensions, Virtual Gallery offers tools to transform your vision into reality—no VR headset required.</p>
-            <p class="about-desc">Our mission is to make art accessible and engaging, blending technology with creativity to create unforgettable experiences. Dive into surreal galleries, interact with 360-degree environments, or capture website screenshots in 3D with ease.</p>
-            <a href="#galleries" class="cta-btn secondary">Discover Our Galleries</a>
-        </div>
-    </section>
-
-    <section id="galleries" class="galleries">
-        <h3 class="section-title">Explore Our Virtual Galleries</h3>
-        <p class="section-desc">Step into a world of art reimagined in 3D. Our galleries offer immersive experiences, from modern abstracts to classical masterpieces, all navigable in stunning detail.</p>
-        <div class="gallery-grid">
-            <a href="modern" class="gallery-card">
-                <img src="https://i.ibb.co/whf77FXV/gallery-view-19.png" alt="Modern Art Gallery" class="gallery-img">
-                <div class="gallery-info">
-                    <h4 class="gallery-title">Modern Art</h4>
-                    <p class="gallery-desc">Vibrant, bold, and abstract—experience contemporary pieces in a dynamic 3D environment that highlights every color and form.</p>
+    <!-- Hero Section with Gravity-Defying Elements -->
+    <section class="hero-gravity">
+        <div class="gravity-container">
+            <div class="hero-content-gravity">
+                <div class="glitch-wrapper">
+                    <h1 class="hero-title-gravity">ART</h1>
+                    <h1 class="hero-title-gravity">TRANSCENDS</h1>
+                    <h1 class="hero-title-gravity accent" data-text="REALITY">REALITY</h1>
                 </div>
-            </a>
-            <a href="creative" class="gallery-card">
-                <img src="https://i.ibb.co/bSqwc5h/gallery-view-20.png" alt="Classical Gallery" class="gallery-img">
-                <div class="gallery-info">
-                    <h4 class="gallery-title">Classical</h4>
-                    <p class="gallery-desc">Timeless masterpieces reimagined in 3D, with intricate details and interactive spaces that bring history to life.</p>
+                
+                <p class="hero-description-gravity">
+                    Experience galleries that defy physics, where art floats, morphs, 
+                    and interacts with your presence in impossible spaces
+                </p>
+
+                <div class="hero-cta-gravity">
+                    <a href="creative" class="btn-gravity btn-primary-gravity">
+                        <span class="btn-content">
+                            <span class="btn-text">ENTER THE VOID</span>
+                            <span class="btn-icon">→</span>
+                        </span>
+                    </a>
+                    <a href="imageexplorer" class="btn-gravity btn-secondary-gravity">
+                        <span class="btn-content">
+                            <span class="btn-text">EXPLORE 360°</span>
+                            <span class="btn-icon">↻</span>
+                        </span>
+                    </a>
                 </div>
-            </a>
-            <!-- <a href="creative" class="gallery-card">
-                <img src="https://i.ibb.co/JRxxf7Bv/museum-view-6.png" alt="Surreal Gallery" class="gallery-img">
-                <div class="gallery-info">
-                    <h4 class="gallery-title">Surreal</h4>
-                    <p class="gallery-desc">Dreamlike scenes that defy reality, crafted with immersive effects to transport you to otherworldly realms.</p>
+
+                <div class="hero-metrics">
+                    <div class="metric-item">
+                        <div class="metric-value" data-value="3">3</div>
+                        <div class="metric-label">DIMENSIONS</div>
+                    </div>
+                    <div class="metric-divider"></div>
+                    <div class="metric-item">
+                        <div class="metric-value" data-value="360">360</div>
+                        <div class="metric-label">DEGREES</div>
+                    </div>
+                    <div class="metric-divider"></div>
+                    <div class="metric-item">
+                        <div class="metric-value infinite">∞</div>
+                        <div class="metric-label">POSSIBILITIES</div>
+                    </div>
                 </div>
-            </a> -->
-        </div>
-    </section>
+            </div>
 
-    <!-- <section id="how-it-works" class="how-it-works">
-        <h3 class="section-title">How It Works</h3>
-        <p class="section-desc">Get started with Virtual Gallery in three simple steps, designed to make your creative journey seamless and inspiring.</p>
-        <div class="steps-container">
-            <div class="step-card">
-                <h4 class="step-title">1. Explore Galleries</h4>
-                <p class="step-desc">Browse our curated 3D virtual galleries, navigating modern, classical, or surreal art in an immersive environment.</p>
-            </div>
-            <div class="step-card">
-                <h4 class="step-title">2. Use 360 Explorer</h4>
-                <p class="step-desc">Upload your images to create interactive 360-degree scenes, downloadable as high-quality images or real-time recordings.</p>
-            </div>
-            <div class="step-card">
-                <h4 class="step-title">3. Capture 3D Screenshots</h4>
-                <p class="step-desc">Visualize website screenshots in a 360-degree space, edit them, and download your creations for professional use.</p>
-            </div>
-        </div>
-        <a href="imageexplorer" class="cta-btn primary">Start Creating Now</a>
-    </section> -->
-
-    <!-- <section id="testimonials" class="testimonials">
-        <h3 class="section-title">What Our Users Say</h3>
-        <p class="section-desc">Hear from artists, creatives, and businesses who have transformed their work with Virtual Gallery.</p>
-        <div class="testimonial-grid">
-            <div class="testimonial-card">
-                <p class="testimonial-text">"Virtual Gallery's 3D galleries brought my artwork to life in ways I never imagined. It's a game-changer for artists!"</p>
-                <p class="testimonial-author">— Sarah M., Digital Artist</p>
-            </div>
-            <div class="testimonial-card">
-                <p class="testimonial-text">"The 360 Explorer is so intuitive! I created stunning interactive scenes for my clients in minutes."</p>
-                <p class="testimonial-author">— James T., Marketing Specialist</p>
-            </div>
-            <div class="testimonial-card">
-                <p class="testimonial-text">"Capturing website screenshots in 3D has elevated our presentations. Virtual Gallery is a must-have tool."</p>
-                <p class="testimonial-author">— Emma L., Web Designer</p>
-            </div>
-        </div>
-    </section> -->
-
-    <section id="features" class="features">
-        <h3 class="section-title">A New Way to Experience Virtual World</h3>
-        <div class="features-container">
-            <div class="feature-card card-1">
-                <h4 class="card-title">3D Virtual Gallery</h4>
-                <p class="card-desc">Want to experience 3d virtual gallery without need for VR or any devices? This is the perfect tool you need. Great for creatives, businesses, photography, exhibitions etc.</p>
-                <div class="card-decor"></div>
-            </div>
-            <div class="feature-card card-2">
-                <h4 class="card-title">360 Image Explorer</h4>
-                <p class="card-desc">Interact with your uploaded images in a fully navigable 3d 360 environment and also download the scene as image or real-time hd recording.</p>
-                <div class="card-decor"></div>
-            </div>
-            <div class="feature-card card-3">
-                <h4 class="card-title">Internal 3d website screenshoter</h4>
-                <p class="card-desc">Wonders what's feel like visualising screenshots of your website in a 360 environment and with options to download? This tool allows internal capture of websites and allows you edit.</p>
-                <div class="card-decor"></div>
+            <div class="hero-visual-gravity">
+                <div class="floating-gallery-preview">
+                    <div class="preview-card card-float-1">
+                        <div class="card-glow-effect"></div>
+                        <img src="https://i.ibb.co/whf77FXV/gallery-view-19.png" alt="Gallery Preview">
+                        <div class="card-reflection"></div>
+                    </div>
+                    <div class="preview-card card-float-2">
+                        <div class="card-glow-effect"></div>
+                        <img src="https://i.ibb.co/bSqwc5h/gallery-view-20.png" alt="Gallery Preview">
+                        <div class="card-reflection"></div>
+                    </div>
+                </div>
+                <div class="geometric-shapes">
+                    <div class="shape shape-1"></div>
+                    <div class="shape shape-2"></div>
+                    <div class="shape shape-3"></div>
+                    <div class="shape shape-4"></div>
+                </div>
             </div>
         </div>
     </section>
 
-    <footer class="footer">
-        <div class="wave"></div>
-        <div class="footer-content">
-            <div class="footer-left">
-                <h4 class="footer-logo">Virtual Gallery</h4>
-                <p class="footer-text">© 2025 Virtual Gallery. Crafted with passion.</p>
+    <!-- About Section with Split Animation -->
+    <section id="about" class="about-split">
+        <div class="split-container">
+            <div class="split-left" data-scroll>
+                <div class="section-label">
+                    <span class="label-line"></span>
+                    <span class="label-text">WHAT WE ARE</span>
+                </div>
+                <h2 class="section-title-split">
+                    Beyond
+                    <span class="title-highlight">Traditional</span>
+                    Galleries
+                </h2>
+                <div class="about-content-blocks">
+                    <div class="content-block">
+                        <div class="block-number">01</div>
+                        <h3>Liquid Physics</h3>
+                        <p>Galleries that morph and flow like liquid, responding to your exploration with fluid animations</p>
+                    </div>
+                    <div class="content-block">
+                        <div class="block-number">02</div>
+                        <h3>Particle Systems</h3>
+                        <p>Art pieces surrounded by thousands of interactive particles that dance to your movements</p>
+                    </div>
+                    <div class="content-block">
+                        <div class="block-number">03</div>
+                        <h3>Zero Gravity</h3>
+                        <p>Navigate through spaces where gravity is optional and perspective is unlimited</p>
+                    </div>
+                </div>
             </div>
-            <div class="footer-links">
-                <a href="#about" class="footer-link">About</a>
-                <a href="#how-it-works" class="footer-link">How It Works</a>
-                <!-- <a href="contact" class="footer-link">Contact</a>
-                <a href="privacy" class="footer-link">Privacy Policy</a> -->
+            
+            <div class="split-right" data-scroll>
+                <div class="visual-stack">
+                    <div class="stack-card">
+                        <div class="icon-container">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                        </div>
+                        <h4>3D Spaces</h4>
+                        <p>Fully navigable virtual environments</p>
+                    </div>
+                    <div class="stack-card">
+                        <div class="icon-container">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </div>
+                        <h4>360° Views</h4>
+                        <p>Complete panoramic immersion</p>
+                    </div>
+                    <div class="stack-card">
+                        <div class="icon-container">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                                <polyline points="2 17 12 22 22 17"/>
+                                <polyline points="2 12 12 17 22 12"/>
+                            </svg>
+                        </div>
+                        <h4>Multi-Layer</h4>
+                        <p>Dimensional depth and parallax</p>
+                    </div>
+                </div>
             </div>
-            <div class="social-links">
-                <a href="https://wa.link/422ieh" class="social-link">WhatsApp</a>
-                <!-- <a href="https://twitter.com" class="social-link">Twitter</a>
-                <a href="https://instagram.com" class="social-link">Instagram</a> -->
+        </div>
+    </section>
+
+    <!-- Gallery Showcase with Magnetic Cards -->
+    <section id="experience" class="gallery-magnetic">
+        <div class="magnetic-container">
+            <div class="section-header-magnetic">
+                <span class="header-tag">COLLECTIONS</span>
+                <h2 class="header-title">
+                    <span class="title-line">IMMERSIVE</span>
+                    <span class="title-line">GALLERIES</span>
+                </h2>
+            </div>
+
+            <div class="gallery-grid-magnetic">
+                <a href="modern" class="magnetic-card" data-magnetic>
+                    <div class="card-border"></div>
+                    <div class="card-image-container">
+                        <img src="https://i.ibb.co/whf77FXV/gallery-view-19.png" alt="Modern Art Gallery" class="card-image-magnetic">
+                        <div class="image-overlay">
+                            <div class="overlay-content">
+                                <span class="explore-text">EXPLORE</span>
+                                <div class="explore-arrow">→</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-info-magnetic">
+                        <div class="info-header">
+                            <span class="card-tag">CONTEMPORARY</span>
+                            <span class="card-number">01</span>
+                        </div>
+                        <h3 class="card-title-magnetic">Modern Art</h3>
+                        <p class="card-description-magnetic">
+                            Bold abstracts floating in impossible geometries, where color and form 
+                            transcend traditional boundaries
+                        </p>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <span class="stat-value">15+</span>
+                                <span class="stat-label">Pieces</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">3D</span>
+                                <span class="stat-label">Space</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-particles"></div>
+                </a>
+
+                <a href="creative" class="magnetic-card" data-magnetic>
+                    <div class="card-border"></div>
+                    <div class="card-image-container">
+                        <img src="https://i.ibb.co/bSqwc5h/gallery-view-20.png" alt="Classical Gallery" class="card-image-magnetic">
+                        <div class="image-overlay">
+                            <div class="overlay-content">
+                                <span class="explore-text">EXPLORE</span>
+                                <div class="explore-arrow">→</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-info-magnetic">
+                        <div class="info-header">
+                            <span class="card-tag">TIMELESS</span>
+                            <span class="card-number">02</span>
+                        </div>
+                        <h3 class="card-title-magnetic">Classical</h3>
+                        <p class="card-description-magnetic">
+                            Masterpieces reimagined in spaces that shift between historical reverence 
+                            and futuristic interpretation
+                        </p>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <span class="stat-value">20+</span>
+                                <span class="stat-label">Pieces</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">360°</span>
+                                <span class="stat-label">View</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-particles"></div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Carousel with 3D Cards -->
+    <section class="features-carousel">
+        <div class="carousel-container">
+            <div class="section-header-carousel">
+                <h2 class="carousel-title">Platform <span class="title-accent">Capabilities</span></h2>
+            </div>
+
+            <div class="cards-3d-container">
+                <div class="card-3d">
+                    <div class="card-face card-front">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                        </div>
+                        <h3>3D Virtual Gallery</h3>
+                        <p>Navigate impossible architectures</p>
+                    </div>
+                    <div class="card-face card-back">
+                        <p>Experience fully immersive 3D galleries without VR equipment. Perfect for exhibitions, portfolios, and creative showcases with physics-defying spaces.</p>
+                    </div>
+                </div>
+
+                <div class="card-3d">
+                    <div class="card-face card-front">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                            </svg>
+                        </div>
+                        <h3>360° Explorer</h3>
+                        <p>Spherical reality bending</p>
+                    </div>
+                    <div class="card-face card-back">
+                        <p>Upload and interact with images in immersive 360° environments. Download scenes as images or high-definition recordings with particle effects.</p>
+                    </div>
+                </div>
+
+                <div class="card-3d">
+                    <div class="card-face card-front">
+                        <div class="card-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                                <line x1="8" y1="21" x2="16" y2="21"/>
+                                <line x1="12" y1="17" x2="12" y2="21"/>
+                            </svg>
+                        </div>
+                        <h3>Dimensional Capture</h3>
+                        <p>Screenshots in hyperdimensional space</p>
+                    </div>
+                    <div class="card-face card-back">
+                        <p>Visualize website screenshots in 360° dimensional spaces with advanced editing capabilities and professional export options.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section with Holographic Effect -->
+    <section class="cta-holographic">
+        <div class="holographic-container">
+            <div class="hologram-effect"></div>
+            <div class="cta-content-holo">
+                <h2 class="cta-title-holo">
+                    Ready to
+                    <span class="title-glitch" data-text="TRANSCEND">TRANSCEND</span>
+                    ?
+                </h2>
+                <p class="cta-text-holo">
+                    Join the artists and visionaries reshaping how we experience digital art
+                </p>
+                <div class="cta-buttons-holo">
+                    <a href="creative" class="btn-holo btn-primary-holo">
+                        <span>BEGIN JOURNEY</span>
+                        <div class="btn-shine"></div>
+                    </a>
+                    <a href="https://wa.link/422ieh" class="btn-holo btn-outline-holo" target="_blank">
+                        <span>CONNECT</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer with Animated Lines -->
+    <footer class="footer-animated">
+        <div class="footer-lines">
+            <div class="line line-1"></div>
+            <div class="line line-2"></div>
+            <div class="line line-3"></div>
+        </div>
+        <div class="footer-container">
+            <div class="footer-main">
+                <div class="footer-brand">
+                    <div class="brand-logo">
+                        <div class="logo-sphere-footer"></div>
+                        <span class="brand-name">VIRTUAL<span class="brand-accent">GALLERY</span></span>
+                    </div>
+                    <p class="brand-tagline">Transcending reality through immersive digital art experiences</p>
+                    <div class="footer-social">
+                        <a href="https://wa.link/422ieh" class="social-btn" target="_blank" aria-label="WhatsApp">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="footer-links-group">
+                    <div class="footer-column">
+                        <h4 class="column-title">Platform</h4>
+                        <ul class="footer-list">
+                            <li><a href="modern">Modern Gallery</a></li>
+                            <li><a href="creative">Classical Gallery</a></li>
+                            <li><a href="imageexplorer">360° Explorer</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="footer-column">
+                        <h4 class="column-title">Company</h4>
+                        <ul class="footer-list">
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#experience">Experience</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Virtual Gallery. Crafting impossible experiences.</p>
             </div>
         </div>
     </footer>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        // Theme Toggle (Commented Out)
-        // const themeToggle = document.getElementById('theme-toggle');
-        // themeToggle.addEventListener('click', () => {
-        //     document.body.classList.toggle('dark');
-        //     themeToggle.textContent = document.body.classList.contains('dark') ? 'Light Theme' : 'Dark Theme';
-        // });
-
-        // Hamburger Menu Toggle
-        const hamburger = document.getElementById('hamburger');
-        const navLinks = document.getElementById('nav-links');
-        hamburger.addEventListener('click', () => {
-            const isOpen = navLinks.classList.toggle('active');
-            hamburger.classList.toggle('open');
-            hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+// ==================== PARTICLE SYSTEM ====================
+class ParticleSystem {
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.ctx = canvas.getContext('2d');
+        this.particles = [];
+        this.particleCount = 80;
+        this.mouse = { x: 0, y: 0 };
+        
+        this.resize();
+        this.init();
+        this.animate();
+        
+        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('mousemove', (e) => {
+            this.mouse.x = e.clientX;
+            this.mouse.y = e.clientY;
         });
-
-        // Dropdown Toggle
-        const dropdownToggle = document.querySelector('.dropdown-toggle');
-        const dropdownMenu = document.querySelector('.dropdown-menu');
-        dropdownToggle.addEventListener('click', (e) => {
-            if (window.innerWidth <= 768) {
-                e.preventDefault(); // Prevent navigating to 'creative' on mobile
-                const isOpen = dropdownMenu.classList.toggle('active');
-                dropdownToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+    
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+    
+    init() {
+        this.particles = [];
+        for (let i = 0; i < this.particleCount; i++) {
+            this.particles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                vx: (Math.random() - 0.5) * 0.5,
+                vy: (Math.random() - 0.5) * 0.5,
+                radius: Math.random() * 2 + 1,
+                opacity: Math.random() * 0.5 + 0.2
+            });
+        }
+    }
+    
+    draw() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.particles.forEach((particle, i) => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            const dx = this.mouse.x - particle.x;
+            const dy = this.mouse.y - particle.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 150) {
+                const force = (150 - distance) / 150;
+                particle.vx -= (dx / distance) * force * 0.1;
+                particle.vy -= (dy / distance) * force * 0.1;
             }
-        });
-
-        // Hover for Desktop Dropdown
-        const dropdown = document.querySelector('.dropdown');
-        dropdown.addEventListener('mouseenter', () => {
-            if (window.innerWidth > 768) {
-                dropdownMenu.classList.add('active');
-                dropdownToggle.setAttribute('aria-expanded', 'true');
-            }
-        });
-        dropdown.addEventListener('mouseleave', () => {
-            if (window.innerWidth > 768) {
-                dropdownMenu.classList.remove('active');
-                dropdownToggle.setAttribute('aria-expanded', 'false');
-            }
-        });
-
-        // Scroll Animation for Features, Galleries, and New Sections
-        const animatedElements = document.querySelectorAll('.feature-card, .gallery-card, .step-card, .testimonial-card');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('visible');
-                    observer.unobserve(entry.target);
+            
+            if (particle.x < 0 || particle.x > this.canvas.width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > this.canvas.height) particle.vy *= -1;
+            
+            particle.vx *= 0.99;
+            particle.vy *= 0.99;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+            this.ctx.fillStyle = `rgba(102, 126, 234, ${particle.opacity})`;
+            this.ctx.fill();
+            
+            this.particles.slice(i + 1).forEach(otherParticle => {
+                const dx = particle.x - otherParticle.x;
+                const dy = particle.y - otherParticle.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 100) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(particle.x, particle.y);
+                    this.ctx.lineTo(otherParticle.x, otherParticle.y);
+                    this.ctx.strokeStyle = `rgba(102, 126, 234, ${0.2 * (1 - distance / 100)})`;
+                    this.ctx.lineWidth = 0.5;
+                    this.ctx.stroke();
                 }
             });
-        }, { threshold: 0.2 });
+        });
+    }
+    
+    animate() {
+        this.draw();
+        requestAnimationFrame(() => this.animate());
+    }
+}
 
-        animatedElements.forEach(element => observer.observe(element));
+// Initialize particle system
+document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('particleCanvas');
+    if (canvas && window.innerWidth > 768) {
+        new ParticleSystem(canvas);
+    }
+});
 
-        // Gallery Card Hover Effects
-        const galleryCards = document.querySelectorAll('.gallery-card');
-        galleryCards.forEach(card => {
-            card.addEventListener('mouseenter', () => {
-                const img = card.querySelector('.gallery-img');
-                const info = card.querySelector('.gallery-info');
-                img.style.transform = 'scale(1.1) rotate(5deg)';
-                info.style.transform = 'translateY(-15px)';
-                info.style.opacity = '1';
-            });
-
-            card.addEventListener('mouseleave', () => {
-                const img = card.querySelector('.gallery-img');
-                const info = card.querySelector('.gallery-info');
-                img.style.transform = 'scale(1)';
-                info.style.transform = 'translateY(0)';
-                info.style.opacity = '0.8';
+// ==================== NAVIGATION ====================
+document.addEventListener('DOMContentLoaded', () => {
+    const navbar = document.getElementById('navbar');
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
+    
+    if (menuToggle && navMenu) {
+        menuToggle.addEventListener('click', () => {
+            menuToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+        });
+        
+        navMenu.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768 && !link.closest('.mega-dropdown')) {
+                    menuToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    document.body.style.overflow = '';
+                }
             });
         });
+    }
+    
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+        
+        if (currentScroll > 100) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+        
+        lastScroll = currentScroll;
     });
+});
+
+// ==================== MAGNETIC EFFECT ====================
+class MagneticButton {
+    constructor(element) {
+        this.element = element;
+        this.init();
+    }
+    
+    init() {
+        this.element.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.element.addEventListener('mouseleave', () => this.onMouseLeave());
+    }
+    
+    onMouseMove(e) {
+        const rect = this.element.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        
+        this.element.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
+    }
+    
+    onMouseLeave() {
+        this.element.style.transform = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.innerWidth > 768) {
+        const magneticElements = document.querySelectorAll('[data-magnetic]');
+        magneticElements.forEach(el => new MagneticButton(el));
+        
+        const whatsappBtn = document.querySelector('.whatsapp-magnetic');
+        if (whatsappBtn) {
+            const magneticWrap = whatsappBtn.querySelector('.magnetic-wrap');
+            
+            whatsappBtn.addEventListener('mousemove', (e) => {
+                const rect = whatsappBtn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width / 2;
+                const y = e.clientY - rect.top - rect.height / 2;
+                
+                magneticWrap.style.transform = `translate(${x * 0.4}px, ${y * 0.4}px) scale(1.1)`;
+            });
+            
+            whatsappBtn.addEventListener('mouseleave', () => {
+                magneticWrap.style.transform = '';
+            });
+        }
+    }
+});
+
+// ==================== COUNTER ANIMATION ====================
+function animateCounter(element, target, duration = 2000) {
+    const start = 0;
+    const increment = target / (duration / 16);
+    let current = start;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+const metricsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            const counters = entry.target.querySelectorAll('.metric-value[data-value]');
+            counters.forEach(counter => {
+                const target = parseInt(counter.getAttribute('data-value'));
+                if (target && !isNaN(target)) {
+                    animateCounter(counter, target, 2000);
+                }
+            });
+            metricsObserver.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.5 });
+
+document.addEventListener('DOMContentLoaded', () => {
+    const heroMetrics = document.querySelector('.hero-metrics');
+    if (heroMetrics) {
+        metricsObserver.observe(heroMetrics);
+    }
+});
+
+// ==================== SCROLL ANIMATIONS ====================
+const scrollObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+        }
+    });
+}, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -100px 0px'
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const animatedElements = document.querySelectorAll('[data-scroll]');
+    
+    animatedElements.forEach((el, index) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(50px)';
+        el.style.transition = `opacity 0.8s ease ${index * 0.1}s, transform 0.8s ease ${index * 0.1}s`;
+        scrollObserver.observe(el);
+    });
+});
+
+// ==================== SMOOTH SCROLL ====================
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        const href = this.getAttribute('href');
+        if (href !== '#' && href !== '#!') {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) {
+                const offsetTop = target.offsetTop - 100;
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    });
+});
+
+// ==================== 3D CARD TILT ====================
+class CardTilt {
+    constructor(element) {
+        this.element = element;
+        this.init();
+    }
+    
+    init() {
+        this.element.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        this.element.addEventListener('mouseleave', () => this.onMouseLeave());
+    }
+    
+    onMouseMove(e) {
+        const rect = this.element.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        
+        const rotateX = (y - centerY) / 15;
+        const rotateY = (centerX - x) / 15;
+        
+        this.element.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    }
+    
+    onMouseLeave() {
+        this.element.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    if (window.innerWidth > 768) {
+        const tiltCards = document.querySelectorAll('.preview-card, .stack-card');
+        tiltCards.forEach(card => {
+            card.style.transition = 'transform 0.3s ease';
+            new CardTilt(card);
+        });
+    }
+});
+
+// ==================== CARD PARTICLES ====================
+function createCardParticles() {
+    const cards = document.querySelectorAll('.card-particles');
+    
+    cards.forEach(container => {
+        for (let i = 0; i < 10; i++) {
+            const particle = document.createElement('div');
+            particle.style.cssText = `
+                position: absolute;
+                width: 3px;
+                height: 3px;
+                background: #667eea;
+                border-radius: 50%;
+                top: ${Math.random() * 100}%;
+                left: ${Math.random() * 100}%;
+                opacity: 0;
+                animation: particleFloat ${2 + Math.random() * 2}s ease-in-out infinite;
+                animation-delay: ${Math.random() * 2}s;
+            `;
+            container.appendChild(particle);
+        }
+    });
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes particleFloat {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+                opacity: 0;
+            }
+            50% {
+                transform: translateY(-20px) translateX(${Math.random() * 20 - 10}px);
+                opacity: 0.6;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+document.addEventListener('DOMContentLoaded', createCardParticles);
+
+// ==================== RESIZE HANDLER ====================
+let resizeTimer;
+window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        const menuToggle = document.getElementById('menuToggle');
+        const navMenu = document.getElementById('navMenu');
+        
+        if (window.innerWidth > 768) {
+            if (menuToggle) menuToggle.classList.remove('active');
+            if (navMenu) navMenu.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    }, 250);
+});
+
+console.log('%c🎨 Virtual Gallery ', 'background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 10px 20px; font-size: 20px; font-weight: bold;');
+console.log('%cTranscending Reality Through Immersive Art', 'color: #667eea; font-size: 14px;');
     </script>
 </body>
 </html>
