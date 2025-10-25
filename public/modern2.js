@@ -6,6 +6,8 @@ class CustomPointerLockControls extends PointerLockControls {
     constructor(camera, domElement) {
         super(camera, domElement);
         this.sensitivity = 0.001;
+        this.camera = camera; // ✓ FIXED: Store camera reference
+        this.boundMouseMove = this.onMouseMove.bind(this); // ✓ FIXED: Store bound function to prevent memory leak
     }
 
     getObject() {
@@ -14,12 +16,14 @@ class CustomPointerLockControls extends PointerLockControls {
 
     lock() {
         super.lock();
-        this.domElement.ownerDocument.addEventListener("mousemove", this.onMouseMove.bind(this));
+        // ✓ FIXED: Use stored bound function
+        this.domElement.ownerDocument.addEventListener("mousemove", this.boundMouseMove);
     }
 
     unlock() {
         super.unlock();
-        this.domElement.ownerDocument.removeEventListener("mousemove", this.onMouseMove.bind(this));
+        // ✓ FIXED: Remove correct reference
+        this.domElement.ownerDocument.removeEventListener("mousemove", this.boundMouseMove);
     }
 
     onMouseMove(event) {
@@ -140,7 +144,12 @@ class ThreeJSApp {
 
         this.isLoading = true;
         this.showPreloader();
+this.lastRaycastTime = 0;
+this.raycastInterval = 100; // Throttle raycasting
 
+// Initialize UI components
+this.createArtworkProgressUI();
+this.setupMobileControls();
 
         this.fallbackImages = [
             {
@@ -157,7 +166,7 @@ class ThreeJSApp {
                 metadata: {
                     filename: 'demo2.jpg',
                     title: 'Urban Landscape',
-                    description: 'A vibrant depiction of a city skyline at dusk.',
+                    description: 'A vibrant city skyline at dusk.',
                     artist: 'Demo Artist'
                 }
             },
@@ -166,7 +175,7 @@ class ThreeJSApp {
                 metadata: {
                     filename: 'demo3.jpg',
                     title: 'Nature Harmony',
-                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    description: 'Rolling hills under a clear sky.',
                     artist: 'Demo Artist'
                 }
             },
@@ -174,8 +183,8 @@ class ThreeJSApp {
                 url: 'https://picsum.photos/800/600?random=4',
                 metadata: {
                     filename: 'demo4.jpg',
-                    title: 'Nature Harmony',
-                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    title: 'Modern Architecture', // ✓ IMPROVED: Added variety
+                    description: 'Geometric patterns in contemporary design.',
                     artist: 'Demo Artist'
                 }
             },
@@ -183,8 +192,8 @@ class ThreeJSApp {
                 url: 'https://picsum.photos/800/600?random=5',
                 metadata: {
                     filename: 'demo5.jpg',
-                    title: 'Nature Harmony',
-                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    title: 'Ocean Waves', // ✓ IMPROVED: Added variety
+                    description: 'The rhythmic motion of the sea.',
                     artist: 'Demo Artist'
                 }
             },
@@ -192,8 +201,8 @@ class ThreeJSApp {
                 url: 'https://picsum.photos/800/600?random=6',
                 metadata: {
                     filename: 'demo6.jpg',
-                    title: 'Nature Harmony',
-                    description: 'A serene landscape with rolling hills and a clear sky.',
+                    title: 'Night Sky', // ✓ IMPROVED: Added variety
+                    description: 'Stars scattered across the cosmos.',
                     artist: 'Demo Artist'
                 }
             }
@@ -201,31 +210,47 @@ class ThreeJSApp {
     }
 
     showPreloader() {
-        const preloader = document.createElement('div');
-        preloader.id = 'preloader';
-        preloader.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 24px;
-        `;
-        preloader.innerHTML = `
-            <div>
-                <p>Loading Gallery...</p>
-                <div style="width: 50px; height: 50px; border: 5px solid #fff; border-top: 5px solid #1e90ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            </div>
-        `;
-        document.body.appendChild(preloader);
-    }
+    const preloader = document.createElement('div');
+    preloader.id = 'preloader';
+    preloader.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+    `;
+    
+    preloader.innerHTML = `
+        <div style="text-align: center;">
+            <div style="
+                width: 80px;
+                height: 80px;
+                border: 5px solid rgba(255,255,255,0.3);
+                border-top: 5px solid white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 30px;
+            "></div>
+            <h2 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">Loading Gallery...</h2>
+            <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 16px;">Preparing your virtual exhibition</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(preloader);
+}
 
     hidePreloader() {
         const preloader = document.getElementById('preloader');
@@ -688,6 +713,7 @@ class ThreeJSApp {
         this.updateImageEffects();
         this.updateLighting();
         this.renderer.render(this.scene, this.camera);
+        this.updateArtworkProgress();
         if (this.isMobile) this.controls.update();
         this.updateAvatarPosition();
         
@@ -697,7 +723,151 @@ class ThreeJSApp {
         this.animationMixer.update(delta * this.animationSpeed);
         this.updateObjectAnimations();
     }
+showArtworkInfo(index) {
+    const metadata = this.metadata[index];
+    if (!metadata) return;
+    
+    // Remove existing info
+    const existing = document.getElementById('artworkInfo');
+    if (existing) existing.remove();
+    
+    const info = document.createElement('div');
+    info.id = 'artworkInfo';
+    info.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 350px;
+        z-index: 1000;
+        font-family: Arial, sans-serif;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        animation: slideInLeft 0.3s ease;
+    `;
+    
+    info.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; font-size: 20px; color: #4CAF50;">${metadata.title}</h3>
+        <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">
+            <strong>Artist:</strong> ${metadata.artist}
+        </p>
+        <p style="margin: 10px 0 0 0; font-size: 13px; line-height: 1.5; opacity: 0.8;">
+            ${metadata.description}
+        </p>
+        <button id="closeArtworkInfo" style="
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        ">Close</button>
+        <style>
+            @keyframes slideInLeft {
+                from { transform: translateX(-100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(info);
+    
+    document.getElementById('closeArtworkInfo').addEventListener('click', () => info.remove());
+    
+    // Auto-remove after 12 seconds
+    setTimeout(() => {
+        if (info.parentNode) {
+            info.style.animation = 'fadeOut 0.5s ease';
+            setTimeout(() => info.remove(), 500);
+        }
+    }, 12000);
+}
 
+toggleHelpOverlay() {
+    let help = document.getElementById('keyboardHelp');
+    
+    if (help) {
+        help.remove();
+        return;
+    }
+    
+    help = document.createElement('div');
+    help.id = 'keyboardHelp';
+    help.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.95);
+        color: white;
+        padding: 30px 40px;
+        border-radius: 15px;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        max-width: 550px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        animation: scaleIn 0.3s ease;
+    `;
+    
+    const shortcuts = this.isMobile ? `
+        <h2 style="margin: 0 0 25px 0; text-align: center; font-size: 28px; color: #4CAF50;">📱 Mobile Controls</h2>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 15px 25px; font-size: 15px;">
+            <strong>👆 Swipe</strong><span>Look around</span>
+            <strong>🤏 Pinch</strong><span>Zoom in/out</span>
+            <strong>👆 Tap</strong><span>Focus artwork</span>
+            <strong>👆👆 Double-tap</strong><span>Open slider</span>
+            <strong>🕹️ Joystick</strong><span>Move (bottom-left)</span>
+        </div>
+    ` : `
+        <h2 style="margin: 0 0 25px 0; text-align: center; font-size: 28px; color: #4CAF50;">⌨️ Keyboard Shortcuts</h2>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 15px 25px; font-size: 15px;">
+            <strong>W A S D</strong><span>Move around</span>
+            <strong>Q / E</strong><span>Rotate left/right</span>
+            <strong>1-9</strong><span>Jump to artwork</span>
+            <strong>← →</strong><span>Prev/Next artwork</span>
+            <strong>Mouse</strong><span>Look around</span>
+            <strong>ESC</strong><span>Unlock/Exit</span>
+            <strong>?</strong><span>Toggle help</span>
+            <strong>Double-click</strong><span>Focus artwork</span>
+        </div>
+    `;
+    
+    help.innerHTML = `
+        ${shortcuts}
+        <button id="closeHelp" style="
+            width: 100%;
+            margin-top: 25px;
+            padding: 12px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        ">Close (ESC or ?)</button>
+        <style>
+            @keyframes scaleIn {
+                from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+                to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(help);
+    document.getElementById('closeHelp').addEventListener('click', () => help.remove());
+}
     async startRecording() {
         if (this.isRecording) return;
     
@@ -1094,7 +1264,89 @@ class ThreeJSApp {
             this.onKeyDown(event);
         });
     }
+    setupMobileControls() {
+    if (!this.isMobile) return;
     
+    const joystick = document.createElement('div');
+    joystick.id = 'virtualJoystick';
+    joystick.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 30px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.15);
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        z-index: 1000;
+        touch-action: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    
+    const joystickKnob = document.createElement('div');
+    joystickKnob.style.cssText = `
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(76, 175, 80, 0.7);
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.1s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    
+    joystick.appendChild(joystickKnob);
+    document.body.appendChild(joystick);
+    
+    let joystickActive = false;
+    let joystickCenter = { x: 0, y: 0 };
+    
+    joystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        joystickActive = true;
+        const rect = joystick.getBoundingClientRect();
+        joystickCenter = {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+        joystickKnob.style.background = 'rgba(76, 175, 80, 0.9)';
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const dx = touch.clientX - joystickCenter.x;
+        const dy = touch.clientY - joystickCenter.y;
+        const maxDistance = 35;
+        
+        const clampedDx = Math.max(-maxDistance, Math.min(maxDistance, dx));
+        const clampedDy = Math.max(-maxDistance, Math.min(maxDistance, dy));
+        
+        joystickKnob.style.transform = `translate(calc(-50% + ${clampedDx}px), calc(-50% + ${clampedDy}px))`;
+        
+        // Convert to movement
+        const threshold = 8;
+        this.keys.w = clampedDy < -threshold;
+        this.keys.s = clampedDy > threshold;
+        this.keys.a = clampedDx < -threshold;
+        this.keys.d = clampedDx > threshold;
+    }, { passive: false });
+    
+    const resetJoystick = () => {
+        joystickActive = false;
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystickKnob.style.background = 'rgba(76, 175, 80, 0.7)';
+        this.keys = { w: false, a: false, s: false, d: false, q: false, e: false };
+    };
+    
+    document.addEventListener('touchend', resetJoystick);
+    document.addEventListener('touchcancel', resetJoystick);
+}
     // Restore UI controls
     restoreControls() {
         console.log("Restoring controls, isLocked:", this.isLocked, "isSliderActive:", this.isSliderActive);
@@ -1395,17 +1647,42 @@ class ThreeJSApp {
         console.log(this.controlsVisible ? "🖥️ Controls visible" : "🖥️ Controls hidden");
     }
 
-    onKeyDown(event) {
-        switch (event.key.toLowerCase()) {
-            case "w": this.keys.w = true; break;
-            case "a": this.keys.a = true; break;
-            case "s": this.keys.s = true; break;
-            case "d": this.keys.d = true; break;
-            case "q": this.keys.q = true; break;
-            case "e": this.keys.e = true; break;
-            case "escape": this.controls.unlock(); break;
+   onKeyDown(event) {
+    // Existing movement keys
+    switch(event.key.toLowerCase()) {
+        case "w": this.keys.w = true; break;
+        case "a": this.keys.a = true; break;
+        case "s": this.keys.s = true; break;
+        case "d": this.keys.d = true; break;
+        case "q": this.keys.q = true; break;
+        case "e": this.keys.e = true; break;
+        case "control": this.isControlPressed = true; break;
+    }
+    
+    // ✨ NEW: Number keys for artwork navigation
+    const num = parseInt(event.key);
+    if (num >= 1 && num <= 9 && num <= this.images.length) {
+        this.focusOnArtwork(num - 1);
+    }
+    
+    // ✨ NEW: Arrow keys for navigation
+    if (!this.isSliderActive) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            this.navigateToNextArtwork();
+        }
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            this.navigateToPrevArtwork();
         }
     }
+    
+    // ✨ NEW: Help toggle
+    if (event.key === '?' || event.key === '/') {
+        this.toggleHelpOverlay();
+    }
+    if (event.key.toLowerCase() === 'r') {
+    this.resetCameraPosition();
+}
+}
 
     onKeyUp(event) {
         switch (event.key.toLowerCase()) {
@@ -1448,7 +1725,11 @@ class ThreeJSApp {
         }
         this.updateAutoRotate();
     }
-
+  resetCameraPosition() {
+    const initialSettings = this.roomCameraSettings[0];
+    this.smoothCameraTransition(initialSettings.position, initialSettings.lookAt);
+    this.isFocused = false;
+}
     checkCollisions() {
         if (!this.isMobile) {
             this.camera.position.y = 1.6;
@@ -1810,7 +2091,9 @@ class ThreeJSApp {
     }
 
     openSlider(selectedMesh) {
-        this.updateCameraState(); // Save state before opening slider
+       if (!this.isFocused) {
+    this.updateCameraState(); // Only save if not already focused
+}
         if (!this.images.length) return;
     
         if (!this.isMobile && this.isLocked) {
@@ -2082,13 +2365,64 @@ class ThreeJSApp {
                     "rotation=", this.previousCameraState.rotation.toArray());
     }
 
-    handleDownload() {
-        const imgData = this.renderer.domElement.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = imgData;
-        link.download = "gallery_view.png";
-        link.click();
-    }
+   handleDownload() {
+    const currentIndex = this.getCurrentArtworkIndex();
+    const metadata = this.metadata[currentIndex];
+    
+    const imgData = this.renderer.domElement.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = imgData;
+    
+    // Better filename with artwork info
+    const filename = metadata 
+        ? `gallery_${metadata.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+        : `gallery_view_${Date.now()}.png`;
+    
+    link.download = filename;
+    link.click();
+    
+    // Show confirmation
+    this.showDownloadConfirmation(metadata);
+}
+
+showDownloadConfirmation(metadata) {
+    const msg = document.createElement('div');
+    msg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(76, 175, 80, 0.95);
+        color: white;
+        padding: 18px 28px;
+        border-radius: 12px;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        animation: slideInRight 0.3s ease;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    `;
+    msg.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 24px;">✅</div>
+            <div>
+                <strong style="font-size: 16px;">Screenshot saved!</strong><br>
+                ${metadata ? `<small style="opacity: 0.9;">${metadata.title}</small>` : ''}
+            </div>
+        </div>
+        <style>
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    `;
+    document.body.appendChild(msg);
+    
+    setTimeout(() => {
+        msg.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => msg.remove(), 300);
+    }, 3000);
+}
 
     handleZoom() {
         const zoomSlider = document.getElementById("zoomSlider");
@@ -2223,6 +2557,318 @@ async handleScreenshotSubmit(event) {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
+    // ============ ARTWORK NAVIGATION METHODS ============
+
+createArtworkProgressUI() {
+    const progressBar = document.createElement('div');
+    progressBar.id = 'artworkProgress';
+    progressBar.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        padding: 12px 24px;
+        border-radius: 25px;
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        z-index: 100;
+        display: none;
+        align-items: center;
+        gap: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    
+    progressBar.innerHTML = `
+        <span id="artworkCounter">0 / 0</span>
+        <div style="display: flex; gap: 5px;" id="artworkDots"></div>
+    `;
+    
+    document.body.appendChild(progressBar);
+}
+
+updateArtworkProgress() {
+    const progressBar = document.getElementById('artworkProgress');
+    const counter = document.getElementById('artworkCounter');
+    const dots = document.getElementById('artworkDots');
+    
+    if (!counter || !dots || !this.images.length) return;
+    
+    progressBar.style.display = 'flex';
+    
+    const current = this.getCurrentArtworkIndex() + 1;
+    const total = this.images.length;
+    
+    counter.textContent = `${current} / ${total}`;
+    
+    // Create clickable dots
+    dots.innerHTML = '';
+    this.images.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+            width: ${index === current - 1 ? '12px' : '8px'};
+            height: ${index === current - 1 ? '12px' : '8px'};
+            border-radius: 50%;
+            background: ${index === current - 1 ? '#4CAF50' : '#666'};
+            transition: all 0.3s ease;
+            cursor: pointer;
+        `;
+        dot.title = this.metadata[index]?.title || `Artwork ${index + 1}`;
+        dot.addEventListener('click', () => this.focusOnArtwork(index));
+        dots.appendChild(dot);
+    });
+}
+
+getCurrentArtworkIndex() {
+    if (!this.images.length) return 0;
+    
+    const direction = new THREE.Vector3();
+    this.camera.getWorldDirection(direction);
+    
+    let closestIndex = 0;
+    let maxDot = -Infinity;
+    
+    this.images.forEach((img, index) => {
+        const toArtwork = new THREE.Vector3()
+            .subVectors(img.mesh.position, this.camera.position) // ✓ FIXED: Access mesh.position
+            .normalize();
+        const dot = direction.dot(toArtwork);
+        if (dot > maxDot) {
+            maxDot = dot;
+            closestIndex = index;
+        }
+    });
+    
+    return closestIndex;
+}
+
+focusOnArtwork(index) {
+      if (index < 0 || index >= this.images.length) return;
+    
+    this.isFocused = true; // ✓ ADD THIS LINE
+    
+    const artwork = this.images[index];
+    const artworkPos = artwork.mesh.position.clone();
+    const artworkRotation = artwork.mesh.rotation.y;
+    
+    // ✓ FIXED: Properly calculate normal from rotation
+    const normal = new THREE.Vector3(
+        Math.sin(artworkRotation),
+        0,
+        Math.cos(artworkRotation)
+    );
+    
+    // Use a consistent viewing distance (adjust 6 to your preference: 5-8)
+    const viewingDistance = 6;
+    
+    const targetPos = artworkPos.clone();
+    targetPos.add(normal.multiplyScalar(viewingDistance));
+    targetPos.y = 1.6;
+    
+    this.smoothCameraTransition(targetPos, artworkPos);
+    this.showArtworkInfo(index);
+    setTimeout(() => this.updateCameraState(), 1100);
+}
+
+smoothCameraTransition(targetPosition, lookAtPosition) {
+    const startPos = this.camera.position.clone();
+    const startTime = Date.now();
+    const duration = 1000;
+    
+    const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = this.easeInOutCubic(progress);
+        
+        this.camera.position.lerpVectors(startPos, targetPosition, eased);
+        this.camera.lookAt(lookAtPosition);
+        
+        if (this.isMobile) {
+            this.controls.target.copy(lookAtPosition);
+            this.controls.update();
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        }
+    };
+    
+    animate();
+}
+
+easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+navigateToNextArtwork() {
+    if (!this.images.length) return;
+    const currentIndex = this.getCurrentArtworkIndex();
+    const nextIndex = (currentIndex + 1) % this.images.length;
+    this.focusOnArtwork(nextIndex);
+}
+
+navigateToPrevArtwork() {
+    if (!this.images.length) return;
+    const currentIndex = this.getCurrentArtworkIndex();
+    const prevIndex = (currentIndex - 1 + this.images.length) % this.images.length;
+    this.focusOnArtwork(prevIndex);
+}
+
+showArtworkInfo(index) {
+    const metadata = this.metadata[index];
+    if (!metadata) return;
+    
+    // Remove existing info
+    const existing = document.getElementById('artworkInfo');
+    if (existing) existing.remove();
+    
+    const info = document.createElement('div');
+    info.id = 'artworkInfo';
+    info.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 350px;
+        z-index: 1000;
+        font-family: Arial, sans-serif;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        animation: slideInLeft 0.3s ease;
+    `;
+    
+    info.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; font-size: 20px; color: #4CAF50;">${metadata.title}</h3>
+        <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">
+            <strong>Artist:</strong> ${metadata.artist}
+        </p>
+        <p style="margin: 10px 0 0 0; font-size: 13px; line-height: 1.5; opacity: 0.8;">
+            ${metadata.description}
+        </p>
+        <button id="closeArtworkInfo" style="
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        ">Close</button>
+        <style>
+            @keyframes slideInLeft {
+                from { transform: translateX(-100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(info);
+    
+    document.getElementById('closeArtworkInfo').addEventListener('click', () => info.remove());
+    
+    // Auto-remove after 12 seconds
+    setTimeout(() => {
+        if (info.parentNode) {
+            info.style.animation = 'fadeOut 0.5s ease';
+            setTimeout(() => info.remove(), 500);
+        }
+    }, 12000);
+}
+
+setupMobileControls() {
+    if (!this.isMobile) return;
+    
+    const joystick = document.createElement('div');
+    joystick.id = 'virtualJoystick';
+    joystick.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 30px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.15);
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        z-index: 1000;
+        touch-action: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    
+    const joystickKnob = document.createElement('div');
+    joystickKnob.style.cssText = `
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(76, 175, 80, 0.7);
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.1s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    
+    joystick.appendChild(joystickKnob);
+    document.body.appendChild(joystick);
+    
+    let joystickActive = false;
+    let joystickCenter = { x: 0, y: 0 };
+    
+    joystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        joystickActive = true;
+        const rect = joystick.getBoundingClientRect();
+        joystickCenter = {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+        joystickKnob.style.background = 'rgba(76, 175, 80, 0.9)';
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const dx = touch.clientX - joystickCenter.x;
+        const dy = touch.clientY - joystickCenter.y;
+        const maxDistance = 35;
+        
+        const clampedDx = Math.max(-maxDistance, Math.min(maxDistance, dx));
+        const clampedDy = Math.max(-maxDistance, Math.min(maxDistance, dy));
+        
+        joystickKnob.style.transform = `translate(calc(-50% + ${clampedDx}px), calc(-50% + ${clampedDy}px))`;
+        
+        // Convert to movement
+        const threshold = 8;
+        this.keys.w = clampedDy < -threshold;
+        this.keys.s = clampedDy > threshold;
+        this.keys.a = clampedDx < -threshold;
+        this.keys.d = clampedDx > threshold;
+    }, { passive: false });
+    
+    const resetJoystick = () => {
+        joystickActive = false;
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystickKnob.style.background = 'rgba(76, 175, 80, 0.7)';
+        this.keys = { w: false, a: false, s: false, d: false, q: false, e: false };
+    };
+    
+    document.addEventListener('touchend', resetJoystick);
+    document.addEventListener('touchcancel', resetJoystick);
+}
 
     showAvatarInstructions() {
         const instructions = document.createElement("div");
@@ -2259,3 +2905,4 @@ async handleScreenshotSubmit(event) {
 
 const app = new ThreeJSApp();
 app.init();
+
