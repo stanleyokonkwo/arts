@@ -297,11 +297,36 @@ class ScreenshotServer {
 
             const metadataPath = path.join(sessionDir, 'metadata.json');
             let metadata = [];
+            let sourceUrl = null;
+
             if (fs.existsSync(metadataPath)) {
-                metadata = await fs.readJson(metadataPath);
+                const metadataContent = await fs.readJson(metadataPath);
+                
+                // Extract source URL if present
+                if (metadataContent.sourceUrl) {
+                    sourceUrl = metadataContent.sourceUrl;
+                }
+
+                if (Array.isArray(metadataContent)) {
+                    metadata = metadataContent;
+                } else if (metadataContent.metadata) {
+                    metadata = metadataContent.metadata;
+                }
+
+                // Add sourceUrl to each metadata entry
+                if (sourceUrl) {
+                    metadata = metadata.map(meta => ({
+                        ...meta,
+                        sourceUrl: sourceUrl
+                    }));
+                }
             }
 
-            res.json({ screenshots: screenshotUrls, metadata });
+            res.json({ 
+                screenshots: screenshotUrls, 
+                metadata,
+                sourceUrl
+            });
         } catch (error) {
             console.error('❌ Error fetching screenshots:', error);
             res.status(500).json({ error: 'Failed to retrieve screenshots' });
@@ -322,7 +347,34 @@ class ScreenshotServer {
 
         try {
             await this.captureMockup(url, sessionDir);
-            res.json({ success: true, message: `Screenshots captured for ${url}`, sessionId });
+
+            // Store source URL in metadata
+            const metadataPath = path.join(sessionDir, 'metadata.json');
+            const files = await fs.readdir(sessionDir);
+            const imageFiles = files.filter(file => file.match(/\.(png|jpg|jpeg)$/i));
+
+            const metadata = {
+                sourceUrl: url,
+                capturedAt: new Date().toISOString(),
+                shared: false,
+                metadata: imageFiles.map(filename => ({
+                    filename,
+                    title: `Screenshot from ${url}`,
+                    description: `Captured section of ${url}`,
+                    sourceUrl: url
+                }))
+            };
+
+            await fs.writeJson(metadataPath, metadata, { spaces: 2 });
+            console.log(`📝 Saved metadata with source URL: ${url}`);
+
+            res.json({ 
+                success: true, 
+                message: `Screenshots captured for ${url}`, 
+                sessionId,
+                sourceUrl: url,
+                fileCount: imageFiles.length
+            });
         } catch (error) {
             console.error('❌ Screenshot capture failed:', error);
             res.status(500).json({ error: 'Failed to capture screenshot', details: error.message });
