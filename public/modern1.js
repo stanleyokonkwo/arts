@@ -149,14 +149,25 @@ class ThreeJSApp {
         this.isAnimatingObjects = false;
         this.animationSpeed = 1.0;
 
+        // Web frame modal system
+        this.webFrameData = [];
+        this.activeWebModal = null;
+
         this.addLighting();
         this.createGallery();
         this.setupAudio();
         this.setupEventListeners();
         this.createAvatar();
+        this.initializeWebFrameModal(); // Initialize modal system
 
         this.isLoading = true;
         this.showPreloader();
+        this.lastRaycastTime = 0;
+this.raycastInterval = 100; // Throttle raycasting
+
+// Initialize UI components
+this.createArtworkProgressUI();
+this.setupMobileControls();
 
         this.fallbackImages = [
             {
@@ -217,32 +228,48 @@ class ThreeJSApp {
     }
 
 
-    showPreloader() {
-        const preloader = document.createElement('div');
-        preloader.id = 'preloader';
-        preloader.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1001;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 24px;
-        `;
-        preloader.innerHTML = `
-            <div>
-                <p>Loading Gallery...</p>
-                <div style="width: 50px; height: 50px; border: 5px solid #fff; border-top: 5px solid #1e90ff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-            </div>
-        `;
-        document.body.appendChild(preloader);
-    }
+   showPreloader() {
+    const preloader = document.createElement('div');
+    preloader.id = 'preloader';
+    preloader.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+    `;
+    
+    preloader.innerHTML = `
+        <div style="text-align: center;">
+            <div style="
+                width: 80px;
+                height: 80px;
+                border: 5px solid rgba(255,255,255,0.3);
+                border-top: 5px solid white;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 30px;
+            "></div>
+            <h2 style="color: white; margin: 0; font-size: 28px; font-weight: bold;">Loading Gallery...</h2>
+            <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 16px;">Preparing your virtual exhibition</p>
+        </div>
+        <style>
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(preloader);
+}
 
     hidePreloader() {
         const preloader = document.getElementById('preloader');
@@ -667,6 +694,8 @@ class ThreeJSApp {
             this.update();
             this.updateImageEffects();
             this.renderer.render(this.scene, this.camera);
+            // ADD THIS LINE inside the animate() method, after renderer.render():
+this.updateArtworkProgress();
             if (this.isMobile) this.controls.update();
             this.updateAvatarPosition();
             
@@ -677,6 +706,153 @@ class ThreeJSApp {
             this.updateObjectAnimations();
         }
     }
+
+    showArtworkInfo(index) {
+    const metadata = this.metadata[index];
+    if (!metadata) return;
+    
+    // Remove existing info
+    const existing = document.getElementById('artworkInfo');
+    if (existing) existing.remove();
+    
+    const info = document.createElement('div');
+    info.id = 'artworkInfo';
+    info.style.cssText = `
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.9);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 350px;
+        z-index: 1000;
+        font-family: Arial, sans-serif;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        animation: slideInLeft 0.3s ease;
+    `;
+    
+    info.innerHTML = `
+        <h3 style="margin: 0 0 10px 0; font-size: 20px; color: #4CAF50;">${metadata.title}</h3>
+        <p style="margin: 5px 0; font-size: 14px; opacity: 0.9;">
+            <strong>Artist:</strong> ${metadata.artist}
+        </p>
+        <p style="margin: 10px 0 0 0; font-size: 13px; line-height: 1.5; opacity: 0.8;">
+            ${metadata.description}
+        </p>
+        <button id="closeArtworkInfo" style="
+            margin-top: 15px;
+            padding: 8px 16px;
+            background: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        ">Close</button>
+        <style>
+            @keyframes slideInLeft {
+                from { transform: translateX(-100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(info);
+    
+    document.getElementById('closeArtworkInfo').addEventListener('click', () => info.remove());
+    
+    // Auto-remove after 12 seconds
+    setTimeout(() => {
+        if (info.parentNode) {
+            info.style.animation = 'fadeOut 0.5s ease';
+            setTimeout(() => info.remove(), 500);
+        }
+    }, 12000);
+}
+
+toggleHelpOverlay() {
+    let help = document.getElementById('keyboardHelp');
+    
+    if (help) {
+        help.remove();
+        return;
+    }
+    
+    help = document.createElement('div');
+    help.id = 'keyboardHelp';
+    help.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.95);
+        color: white;
+        padding: 30px 40px;
+        border-radius: 15px;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        max-width: 550px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        animation: scaleIn 0.3s ease;
+    `;
+    
+    const shortcuts = this.isMobile ? `
+        <h2 style="margin: 0 0 25px 0; text-align: center; font-size: 28px; color: #4CAF50;">📱 Mobile Controls</h2>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 15px 25px; font-size: 15px;">
+            <strong>👆 Swipe</strong><span>Look around</span>
+            <strong>🤏 Pinch</strong><span>Zoom in/out</span>
+            <strong>👆 Tap</strong><span>Focus artwork</span>
+            <strong>👆👆 Double-tap</strong><span>Open slider</span>
+            <strong>🕹️ Joystick</strong><span>Move (bottom-left)</span>
+        </div>
+    ` : `
+        <h2 style="margin: 0 0 25px 0; text-align: center; font-size: 28px; color: #4CAF50;">⌨️ Keyboard Shortcuts</h2>
+        <div style="display: grid; grid-template-columns: auto 1fr; gap: 15px 25px; font-size: 15px;">
+            <strong>W A S D</strong><span>Move around</span>
+            <strong>Q / E</strong><span>Rotate left/right</span>
+            <strong>1-9</strong><span>Jump to artwork</span>
+            <strong>← →</strong><span>Prev/Next artwork</span>
+            <strong>Mouse</strong><span>Look around</span>
+            <strong>ESC</strong><span>Unlock/Exit</span>
+            <strong>?</strong><span>Toggle help</span>
+            <strong>Double-click</strong><span>Focus artwork</span>
+        </div>
+    `;
+    
+    help.innerHTML = `
+        ${shortcuts}
+        <button id="closeHelp" style="
+            width: 100%;
+            margin-top: 25px;
+            padding: 12px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            border: none;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        ">Close (ESC or ?)</button>
+        <style>
+            @keyframes scaleIn {
+                from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+                to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        </style>
+    `;
+    
+    document.body.appendChild(help);
+    document.getElementById('closeHelp').addEventListener('click', () => help.remove());
+}
+
 
 
     async startRecording() {
@@ -880,6 +1056,13 @@ class ThreeJSApp {
         // Click event for canvas interactions
         this.renderer.domElement.addEventListener("click", (event) => {
             console.log("Canvas clicked, isLocked:", this.isLocked, "isFocused:", this.isFocused, "isSliderActive:", this.isSliderActive);
+            
+            // Check for web frame click first
+            const handledWebFrame = this.handleWebFrameClick(event);
+            if (handledWebFrame) {
+                return; // Don't process other click handlers
+            }
+            
             this.onCanvasClick(event);
         });
     
@@ -1044,6 +1227,90 @@ class ThreeJSApp {
             this.onKeyDown(event);
         });
     }
+
+    setupMobileControls() {
+    if (!this.isMobile) return;
+    
+    const joystick = document.createElement('div');
+    joystick.id = 'virtualJoystick';
+    joystick.style.cssText = `
+        position: fixed;
+        bottom: 100px;
+        left: 30px;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.15);
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        z-index: 1000;
+        touch-action: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    
+    const joystickKnob = document.createElement('div');
+    joystickKnob.style.cssText = `
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: rgba(76, 175, 80, 0.7);
+        border: 2px solid rgba(255,255,255,0.5);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        transition: all 0.1s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    
+    joystick.appendChild(joystickKnob);
+    document.body.appendChild(joystick);
+    
+    let joystickActive = false;
+    let joystickCenter = { x: 0, y: 0 };
+    
+    joystick.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        joystickActive = true;
+        const rect = joystick.getBoundingClientRect();
+        joystickCenter = {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+        joystickKnob.style.background = 'rgba(76, 175, 80, 0.9)';
+    }, { passive: false });
+    
+    document.addEventListener('touchmove', (e) => {
+        if (!joystickActive) return;
+        e.preventDefault();
+        
+        const touch = e.touches[0];
+        const dx = touch.clientX - joystickCenter.x;
+        const dy = touch.clientY - joystickCenter.y;
+        const maxDistance = 35;
+        
+        const clampedDx = Math.max(-maxDistance, Math.min(maxDistance, dx));
+        const clampedDy = Math.max(-maxDistance, Math.min(maxDistance, dy));
+        
+        joystickKnob.style.transform = `translate(calc(-50% + ${clampedDx}px), calc(-50% + ${clampedDy}px))`;
+        
+        // Convert to movement
+        const threshold = 8;
+        this.keys.w = clampedDy < -threshold;
+        this.keys.s = clampedDy > threshold;
+        this.keys.a = clampedDx < -threshold;
+        this.keys.d = clampedDx > threshold;
+    }, { passive: false });
+    
+    const resetJoystick = () => {
+        joystickActive = false;
+        joystickKnob.style.transform = 'translate(-50%, -50%)';
+        joystickKnob.style.background = 'rgba(76, 175, 80, 0.7)';
+        this.keys = { w: false, a: false, s: false, d: false, q: false, e: false };
+    };
+    
+    document.addEventListener('touchend', resetJoystick);
+    document.addEventListener('touchcancel', resetJoystick);
+}
     
     // Restore UI controls
     restoreControls() {
@@ -1346,17 +1613,45 @@ class ThreeJSApp {
         console.log(this.controlsVisible ? "🖥️ Controls visible" : "🖥️ Controls hidden");
     }
 
-    onKeyDown(event) {
-        switch (event.key.toLowerCase()) {
-            case "w": this.keys.w = true; break;
-            case "a": this.keys.a = true; break;
-            case "s": this.keys.s = true; break;
-            case "d": this.keys.d = true; break;
-            case "q": this.keys.q = true; break;
-            case "e": this.keys.e = true; break;
-            case "escape": this.controls.unlock(); break;
+   onKeyDown(event) {
+    
+    // Existing movement keys
+    switch(event.key.toLowerCase()) {
+        case "w": this.keys.w = true; break;
+        case "a": this.keys.a = true; break;
+        case "s": this.keys.s = true; break;
+        case "d": this.keys.d = true; break;
+        case "q": this.keys.q = true; break;
+        case "e": this.keys.e = true; break;
+        case "control": this.isControlPressed = true; break;
+
+        
+    }
+    
+    // ✨ NEW: Number keys for artwork navigation
+    const num = parseInt(event.key);
+    if (num >= 1 && num <= 9 && num <= this.images.length) {
+        this.focusOnArtwork(num - 1);
+    }
+    
+    // ✨ NEW: Arrow keys for navigation
+    if (!this.isSliderActive) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            this.navigateToNextArtwork();
+        }
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            this.navigateToPrevArtwork();
         }
     }
+    
+    // ✨ NEW: Help toggle
+    if (event.key === '?' || event.key === '/') {
+        this.toggleHelpOverlay();
+    }
+    if (event.key.toLowerCase() === 'r') {
+    this.resetCameraPosition();
+}
+}
 
     onKeyUp(event) {
         switch (event.key.toLowerCase()) {
@@ -1413,6 +1708,12 @@ class ThreeJSApp {
         if (this.interactionCooldown > 0) this.interactionCooldown -= 0.016;
         this.updateAutoRotate();
     }
+
+    resetCameraPosition() {
+    const initialSettings = this.roomCameraSettings[0];
+    this.smoothCameraTransition(initialSettings.position, initialSettings.lookAt);
+    this.isFocused = false;
+}
     checkCollisions() {
         if (!this.isMobile) {
             this.camera.position.y = this.config.cameraHeight;
@@ -1477,14 +1778,16 @@ class ThreeJSApp {
                             filename: m.filename,
                             title: m.title || 'Untitled',
                             description: m.description || '',
-                            artist: m.artist || 'Unknown'
+                            artist: m.artist || 'Unknown',
+                            sourceUrl: m.sourceUrl || data.sourceUrl || data.metadata.sourceUrl
                         }));
                     } else if (Array.isArray(data.metadata)) {
                         this.metadata = data.metadata.map(m => ({
                             filename: m.filename,
                             title: m.title || 'Untitled',
                             description: m.description || '',
-                            artist: m.artist || 'Unknown'
+                            artist: m.artist || 'Unknown',
+                            sourceUrl: m.sourceUrl || data.sourceUrl
                         }));
                     }
                 }
@@ -1494,7 +1797,8 @@ class ThreeJSApp {
                         filename: filename.split('/').pop(),
                         title: 'Untitled',
                         description: '',
-                        artist: 'Unknown'
+                        artist: 'Unknown',
+                        sourceUrl: data.sourceUrl
                     }));
                 }
     
@@ -1655,6 +1959,12 @@ class ThreeJSApp {
                     };
                     room.add(mesh);
                     this.images.push({ mesh, filename, hash, metadata: meta });
+
+                    // Tag mesh as web frame if sourceUrl exists
+                    if (meta.sourceUrl) {
+                        console.log(`📄 Tagging mesh as web frame for ${meta.sourceUrl}`);
+                        this.tagMeshAsWebFrame(mesh, meta.sourceUrl);
+                    }
 
                     const frameShape = new THREE.Shape();
                     frameShape.moveTo(-adjustedWidth / 2 - this.config.frameThickness, -this.config.displayHeight / 2 - this.config.frameThickness);
@@ -2089,12 +2399,63 @@ class ThreeJSApp {
     }
 
     handleDownload() {
-        const imgData = this.renderer.domElement.toDataURL("image/png");
-        const link = document.createElement("a");
-        link.href = imgData;
-        link.download = "gallery_view.png";
-        link.click();
-    }
+    const currentIndex = this.getCurrentArtworkIndex();
+    const metadata = this.metadata[currentIndex];
+    
+    const imgData = this.renderer.domElement.toDataURL("image/png");
+    const link = document.createElement("a");
+    link.href = imgData;
+    
+    // Better filename with artwork info
+    const filename = metadata 
+        ? `gallery_${metadata.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`
+        : `gallery_view_${Date.now()}.png`;
+    
+    link.download = filename;
+    link.click();
+    
+    // Show confirmation
+    this.showDownloadConfirmation(metadata);
+}
+
+showDownloadConfirmation(metadata) {
+    const msg = document.createElement('div');
+    msg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: rgba(76, 175, 80, 0.95);
+        color: white;
+        padding: 18px 28px;
+        border-radius: 12px;
+        z-index: 10000;
+        font-family: Arial, sans-serif;
+        animation: slideInRight 0.3s ease;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    `;
+    msg.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="font-size: 24px;">✅</div>
+            <div>
+                <strong style="font-size: 16px;">Screenshot saved!</strong><br>
+                ${metadata ? `<small style="opacity: 0.9;">${metadata.title}</small>` : ''}
+            </div>
+        </div>
+        <style>
+            @keyframes slideInRight {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    `;
+    document.body.appendChild(msg);
+    
+    setTimeout(() => {
+        msg.style.animation = 'fadeOut 0.3s ease';
+        setTimeout(() => msg.remove(), 300);
+    }, 3000);
+}
 
     handleZoom() {
         const zoomSlider = document.getElementById("zoomSlider");
@@ -2228,6 +2589,164 @@ class ThreeJSApp {
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
     }
+    // ============ ARTWORK NAVIGATION METHODS ============
+
+createArtworkProgressUI() {
+    const progressBar = document.createElement('div');
+    progressBar.id = 'artworkProgress';
+    progressBar.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.8);
+        padding: 12px 24px;
+        border-radius: 25px;
+        color: white;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        z-index: 100;
+        display: none;
+        align-items: center;
+        gap: 15px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    `;
+    
+    progressBar.innerHTML = `
+        <span id="artworkCounter">0 / 0</span>
+        <div style="display: flex; gap: 5px;" id="artworkDots"></div>
+    `;
+    
+    document.body.appendChild(progressBar);
+}
+
+updateArtworkProgress() {
+    const progressBar = document.getElementById('artworkProgress');
+    const counter = document.getElementById('artworkCounter');
+    const dots = document.getElementById('artworkDots');
+    
+    if (!counter || !dots || !this.images.length) return;
+    
+    progressBar.style.display = 'flex';
+    
+    const current = this.getCurrentArtworkIndex() + 1;
+    const total = this.images.length;
+    
+    counter.textContent = `${current} / ${total}`;
+    
+    // Create clickable dots
+    dots.innerHTML = '';
+    this.images.forEach((_, index) => {
+        const dot = document.createElement('div');
+        dot.style.cssText = `
+            width: ${index === current - 1 ? '12px' : '8px'};
+            height: ${index === current - 1 ? '12px' : '8px'};
+            border-radius: 50%;
+            background: ${index === current - 1 ? '#4CAF50' : '#666'};
+            transition: all 0.3s ease;
+            cursor: pointer;
+        `;
+        dot.title = this.metadata[index]?.title || `Artwork ${index + 1}`;
+        dot.addEventListener('click', () => this.focusOnArtwork(index));
+        dots.appendChild(dot);
+    });
+}
+
+getCurrentArtworkIndex() {
+    if (!this.images.length) return 0;
+    
+    const direction = new THREE.Vector3();
+    this.camera.getWorldDirection(direction);
+    
+    let closestIndex = 0;
+    let maxDot = -Infinity;
+    
+    this.images.forEach((img, index) => {
+        const toArtwork = new THREE.Vector3()
+            .subVectors(img.mesh.position, this.camera.position) // ✓ FIXED: Access mesh.position
+            .normalize();
+        const dot = direction.dot(toArtwork);
+        if (dot > maxDot) {
+            maxDot = dot;
+            closestIndex = index;
+        }
+    });
+    
+    return closestIndex;
+}
+
+focusOnArtwork(index) {
+    if (index < 0 || index >= this.images.length) return;
+    
+    const artwork = this.images[index];
+    const artworkPos = artwork.mesh.position.clone();
+    const artworkRotation = artwork.mesh.rotation.y;
+    
+    // ✓ FIXED: Properly calculate normal from rotation
+    const normal = new THREE.Vector3(
+        Math.sin(artworkRotation),
+        0,
+        Math.cos(artworkRotation)
+    );
+    
+    // Use a consistent viewing distance (adjust 6 to your preference: 5-8)
+    const viewingDistance = 6;
+    
+    const targetPos = artworkPos.clone();
+    targetPos.add(normal.multiplyScalar(viewingDistance));
+    targetPos.y = 1.6;
+    
+    this.smoothCameraTransition(targetPos, artworkPos);
+    this.showArtworkInfo(index);
+    setTimeout(() => this.updateCameraState(), 1100);
+}
+
+
+
+smoothCameraTransition(targetPosition, lookAtPosition) {
+    const startPos = this.camera.position.clone();
+    const startTime = Date.now();
+    const duration = 1000;
+    
+    const animate = () => {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = this.easeInOutCubic(progress);
+        
+        this.camera.position.lerpVectors(startPos, targetPosition, eased);
+        this.camera.lookAt(lookAtPosition);
+        
+        if (this.isMobile) {
+            this.controls.target.copy(lookAtPosition);
+            this.controls.update();
+        }
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        }
+    };
+    
+    animate();
+}
+
+easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+navigateToNextArtwork() {
+    if (!this.images.length) return;
+    const currentIndex = this.getCurrentArtworkIndex();
+    const nextIndex = (currentIndex + 1) % this.images.length;
+    this.focusOnArtwork(nextIndex);
+}
+
+navigateToPrevArtwork() {
+    if (!this.images.length) return;
+    const currentIndex = this.getCurrentArtworkIndex();
+    const prevIndex = (currentIndex - 1 + this.images.length) % this.images.length;
+    this.focusOnArtwork(prevIndex);
+}
 
     showAvatarInstructions() {
         const instructions = document.createElement("div");
@@ -2256,6 +2775,407 @@ class ThreeJSApp {
         document.getElementById("closeInstructions").addEventListener("click", () => {
             document.body.removeChild(instructions);
         });
+    }
+
+    // ============================================================================
+    // WEB FRAME MODAL SYSTEM
+    // ============================================================================
+
+    initializeWebFrameModal() {
+        console.log("🌐 Initializing web frame modal system");
+        this.createWebFrameModalStyles();
+        this.createWebFrameModalHTML();
+        this.setupWebFrameModalEvents();
+    }
+
+    createWebFrameModalStyles() {
+        const style = document.createElement('style');
+        style.id = 'webFrameModalStyles';
+        style.textContent = `
+            .web-frame-modal {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.95);
+                z-index: 10000;
+                display: none;
+                flex-direction: column;
+                animation: fadeIn 0.3s ease;
+            }
+
+            .web-frame-modal.active {
+                display: flex !important;
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+
+            .web-frame-modal-header {
+                background: #1a1a1a;
+                padding: 15px 20px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 3px solid #4CAF50;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            }
+
+            .web-frame-modal-url {
+                color: #4CAF50;
+                font-family: 'Courier New', monospace;
+                font-size: 16px;
+                font-weight: bold;
+                text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+            }
+
+            .web-frame-modal-controls {
+                display: flex;
+                gap: 10px;
+            }
+
+            .web-frame-modal-btn {
+                background: #333;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: bold;
+                transition: all 0.3s;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            }
+
+            .web-frame-modal-btn:hover {
+                background: #555;
+                transform: translateY(-2px);
+                box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            }
+
+            .web-frame-modal-btn.close {
+                background: #e74c3c;
+            }
+
+            .web-frame-modal-btn.close:hover {
+                background: #c0392b;
+            }
+
+            .web-frame-modal-btn.new-tab {
+                background: #3498db;
+            }
+
+            .web-frame-modal-btn.new-tab:hover {
+                background: #2980b9;
+            }
+
+            .web-frame-modal-content {
+                flex: 1;
+                padding: 10px;
+                overflow: hidden;
+            }
+
+            .web-frame-modal-iframe {
+                width: 100%;
+                height: 100%;
+                border: none;
+                border-radius: 5px;
+                background: white;
+                box-shadow: 0 0 30px rgba(76, 175, 80, 0.3);
+            }
+
+            .web-frame-indicator {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(76, 175, 80, 0.95);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-size: 14px;
+                font-weight: bold;
+                pointer-events: none;
+                z-index: 100;
+                display: none;
+                animation: slideUp 0.3s ease;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            }
+
+            @keyframes slideUp {
+                from {
+                    bottom: -50px;
+                    opacity: 0;
+                }
+                to {
+                    bottom: 20px;
+                    opacity: 1;
+                }
+            }
+
+            .web-frame-indicator.show {
+                display: block;
+            }
+
+            .web-frame-loading {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: white;
+                font-size: 18px;
+                text-align: center;
+            }
+
+            .web-frame-loading-spinner {
+                border: 4px solid rgba(255,255,255,0.3);
+                border-top: 4px solid #4CAF50;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 15px;
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    createWebFrameModalHTML() {
+        const modal = document.createElement('div');
+        modal.id = 'webFrameModal';
+        modal.className = 'web-frame-modal';
+        modal.innerHTML = `
+            <div class="web-frame-modal-header">
+                <div class="web-frame-modal-url" id="webFrameUrl">🌐 Loading...</div>
+                <div class="web-frame-modal-controls">
+                    <button class="web-frame-modal-btn new-tab" id="webFrameNewTab" title="Open in new browser tab">
+                        <i class="fas fa-external-link-alt"></i> New Tab
+                    </button>
+                    <button class="web-frame-modal-btn close" id="webFrameClose" title="Close and return to gallery">
+                        <i class="fas fa-times"></i> Close (ESC)
+                    </button>
+                </div>
+            </div>
+            <div class="web-frame-modal-content">
+                <div class="web-frame-loading" id="webFrameLoading">
+                    <div class="web-frame-loading-spinner"></div>
+                    <div>Loading website...</div>
+                </div>
+                <iframe 
+                    id="webFrameIframe" 
+                    class="web-frame-modal-iframe" 
+                    sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
+                    style="display: none;"
+                ></iframe>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Create hover indicator
+        const indicator = document.createElement('div');
+        indicator.id = 'webFrameIndicator';
+        indicator.className = 'web-frame-indicator';
+        indicator.innerHTML = '<i class="fas fa-globe"></i> Click to browse this website';
+        document.body.appendChild(indicator);
+    }
+
+    setupWebFrameModalEvents() {
+        // Close button
+        document.getElementById('webFrameClose').addEventListener('click', () => {
+            this.closeWebFrameModal();
+        });
+
+        // New tab button
+        document.getElementById('webFrameNewTab').addEventListener('click', () => {
+            const url = this.activeWebModal?.url;
+            if (url) {
+                window.open(url, '_blank');
+            }
+        });
+
+        // ESC key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.activeWebModal) {
+                this.closeWebFrameModal();
+            }
+        });
+
+        // Click backdrop to close
+        document.getElementById('webFrameModal').addEventListener('click', (e) => {
+            if (e.target.id === 'webFrameModal') {
+                this.closeWebFrameModal();
+            }
+        });
+
+        // Mouse move for hover indicator
+        this.renderer.domElement.addEventListener('mousemove', (e) => {
+            this.handleWebFrameHover(e);
+        });
+
+        // Iframe load event
+        document.getElementById('webFrameIframe').addEventListener('load', () => {
+            document.getElementById('webFrameLoading').style.display = 'none';
+            document.getElementById('webFrameIframe').style.display = 'block';
+        });
+    }
+
+    tagMeshAsWebFrame(mesh, url) {
+        mesh.userData.isWebFrame = true;
+        mesh.userData.webUrl = url;
+        
+        this.webFrameData.push({
+            mesh: mesh,
+            url: url
+        });
+
+        console.log(`📄 Tagged mesh as web frame: ${url}`);
+    }
+
+    openWebFrameModal(url) {
+        console.log(`🌐 Opening web frame modal for: ${url}`);
+
+        // Unlock pointer lock if active
+        if (!this.isMobile && this.controls.isLocked) {
+            this.controls.unlock();
+        }
+
+        const modal = document.getElementById('webFrameModal');
+        const iframe = document.getElementById('webFrameIframe');
+        const urlDisplay = document.getElementById('webFrameUrl');
+        const loading = document.getElementById('webFrameLoading');
+
+        // Reset state
+        loading.style.display = 'block';
+        iframe.style.display = 'none';
+        iframe.src = 'about:blank';
+
+        // Set new URL
+        urlDisplay.innerHTML = `🌐 ${url}`;
+        modal.classList.add('active');
+
+        // Load iframe after a brief delay (smoother transition)
+        setTimeout(() => {
+            iframe.src = url;
+        }, 100);
+
+        this.activeWebModal = { url, modal, iframe };
+
+        // Hide gallery UI
+        const uiOverlay = document.getElementById('ui-overlay');
+        if (uiOverlay) uiOverlay.style.opacity = '0';
+        if (uiOverlay) uiOverlay.style.pointerEvents = 'none';
+
+        console.log("✅ Modal opened successfully");
+    }
+
+    closeWebFrameModal() {
+        console.log('🔒 Closing web frame modal');
+
+        const modal = document.getElementById('webFrameModal');
+        const iframe = document.getElementById('webFrameIframe');
+
+        modal.classList.remove('active');
+        
+        // Clear iframe after animation
+        setTimeout(() => {
+            iframe.src = 'about:blank';
+        }, 300);
+
+        this.activeWebModal = null;
+
+        // Restore gallery UI
+        const uiOverlay = document.getElementById('ui-overlay');
+        if (uiOverlay) uiOverlay.style.opacity = '1';
+        if (uiOverlay) uiOverlay.style.pointerEvents = 'auto';
+
+        // Show return message
+        this.showWebFrameTempMessage('🎮 Returned to gallery');
+    }
+
+    handleWebFrameHover(event) {
+        if (this.activeWebModal) return;
+
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        this.raycaster.setFromCamera(mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+        let hoveredWebFrame = false;
+        for (let intersect of intersects) {
+            if (intersect.object.userData.isWebFrame) {
+                hoveredWebFrame = true;
+                break;
+            }
+        }
+
+        const indicator = document.getElementById('webFrameIndicator');
+        if (hoveredWebFrame) {
+            indicator.classList.add('show');
+        } else {
+            indicator.classList.remove('show');
+        }
+    }
+
+    handleWebFrameClick(event) {
+        if (this.activeWebModal) return false;
+
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        this.raycaster.setFromCamera(mouse, this.camera);
+        const intersects = this.raycaster.intersectObjects(this.scene.children, true);
+
+        for (let intersect of intersects) {
+            if (intersect.object.userData.isWebFrame) {
+                const url = intersect.object.userData.webUrl;
+                this.openWebFrameModal(url);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    showWebFrameTempMessage(message) {
+        const existing = document.getElementById('webFrameTempMessage');
+        if (existing) existing.remove();
+
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'webFrameTempMessage';
+        messageDiv.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(76, 175, 80, 0.95);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            z-index: 9999;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        `;
+        messageDiv.textContent = message;
+        document.body.appendChild(messageDiv);
+
+        setTimeout(() => {
+            messageDiv.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
+                if (messageDiv.parentNode) messageDiv.remove();
+            }, 300);
+        }, 2000);
     }
 }
 
